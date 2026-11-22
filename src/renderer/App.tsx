@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { TopBar } from './components/TopBar';
 import { Sidebar, TabType } from './components/Sidebar';
 import { HomePage } from './pages/HomePage';
@@ -19,6 +20,15 @@ export const App: React.FC = () => {
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>(APP_CONFIG.MOCK_DATA.initialLogs);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  // ── Loader de inicio breve para apreciar la entrada de la carta ──
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 1100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // ── Pokémon card theme ──
   const [activeCard, setActiveCard] = useState<PokemonCard>(() => getRandomCard());
@@ -302,37 +312,124 @@ export const App: React.FC = () => {
 
         {/* View Router */}
         <main className="flex-1 overflow-hidden bg-canvas relative">
-          {activeTab === 'home' && (
-            <HomePage
-              activeAccount={activeAccount}
-              serverStatus={serverStatus}
-              manifest={manifest}
-              settings={settings}
-              progress={progress}
-              onLaunch={handleLaunch}
-              onAbort={handleAbort}
-              onSelectAccount={() => setIsAccountModalOpen(true)}
-              isGameRunning={progress?.step === 'running'}
-              activeCard={activeCard}
-              onChangeCard={handleChangeCard}
-            />
-          )}
+          <AnimatePresence mode="wait">
+            {isInitialLoading ? (
+              <motion.div
+                key="launcher-loader"
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35, ease: 'easeInOut' }}
+                className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#07090e] select-none"
+              >
+                {/* Glow ambiental de fondo */}
+                <div
+                  className="absolute w-[440px] h-[440px] rounded-full blur-3xl opacity-25 pointer-events-none"
+                  style={{ background: 'var(--theme-glow)' }}
+                />
 
-          {activeTab === 'settings' && (
-            <SettingsPage
-              settings={settings}
-              onSaveSettings={handleSaveSettings}
-              onOpenInstanceFolder={handleOpenInstanceFolder}
-              onBrowseJavaPath={handleBrowseJavaPath}
-            />
-          )}
+                {/* Crest / Pokébola mística animada */}
+                <div className="relative mb-6">
+                  {/* Pulso exterior */}
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.35, 0.65, 0.35] }}
+                    transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                    className="absolute -inset-3 rounded-full blur-md"
+                    style={{ background: 'var(--theme-glow)' }}
+                  />
 
-          {activeTab === 'console' && (
-            <ConsolePage
-              logs={logs}
-              onClearLogs={() => setLogs([])}
-            />
-          )}
+                  {/* Círculo central */}
+                  <div
+                    className="w-20 h-20 rounded-full flex items-center justify-center relative shadow-2xl border"
+                    style={{
+                      background: 'linear-gradient(145deg, #0d111d 0%, #151b2c 100%)',
+                      borderColor: 'rgba(255, 255, 255, 0.12)',
+                      boxShadow: '0 0 35px -5px var(--theme-glow)',
+                    }}
+                  >
+                    <div
+                      className="w-12 h-12 rounded-full border-2 flex items-center justify-center"
+                      style={{ borderColor: 'var(--theme-primary)80' }}
+                    >
+                      <motion.div
+                        animate={{ scale: [0.85, 1.1, 0.85] }}
+                        transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                        className="w-6 h-6 rounded-full shadow-lg"
+                        style={{
+                          background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))',
+                          boxShadow: '0 0 16px var(--theme-glow)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Logo tipográfico */}
+                <div className="text-center space-y-1 mb-4 z-10">
+                  <h2 className="text-xl font-black tracking-wider text-white">
+                    COBBLEMON{' '}
+                    <span
+                      style={{
+                        color: 'var(--theme-primary)',
+                        textShadow: '0 0 20px var(--theme-glow)',
+                      }}
+                    >
+                      REALMS
+                    </span>
+                  </h2>
+                  <p className="text-[11px] text-slate-400 font-mono tracking-widest uppercase">
+                    Iniciando entorno...
+                  </p>
+                </div>
+
+                {/* Línea de carga sutil */}
+                <div className="w-48 h-1 bg-black/60 rounded-full overflow-hidden border border-white/10 z-10">
+                  <motion.div
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '100%' }}
+                    transition={{ repeat: Infinity, duration: 1.1, ease: 'easeInOut' }}
+                    className="h-full w-1/2 rounded-full"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent, var(--theme-primary), transparent)',
+                    }}
+                  />
+                </div>
+              </motion.div>
+            ) : (
+              <React.Fragment key={activeTab}>
+                {activeTab === 'home' && (
+                  <HomePage
+                    activeAccount={activeAccount}
+                    serverStatus={serverStatus}
+                    manifest={manifest}
+                    settings={settings}
+                    progress={progress}
+                    onLaunch={handleLaunch}
+                    onAbort={handleAbort}
+                    onSelectAccount={() => setIsAccountModalOpen(true)}
+                    isGameRunning={progress?.step === 'running'}
+                    activeCard={activeCard}
+                    onChangeCard={handleChangeCard}
+                  />
+                )}
+
+                {activeTab === 'settings' && (
+                  <SettingsPage
+                    settings={settings}
+                    onSaveSettings={handleSaveSettings}
+                    onOpenInstanceFolder={handleOpenInstanceFolder}
+                    onBrowseJavaPath={handleBrowseJavaPath}
+                  />
+                )}
+
+                {activeTab === 'console' && (
+                  <ConsolePage
+                    logs={logs}
+                    onClearLogs={() => setLogs([])}
+                  />
+                )}
+              </React.Fragment>
+            )}
+          </AnimatePresence>
         </main>
       </div>
 
