@@ -13,12 +13,27 @@ interface PokemonHoloCardProps {
   isGameRunning?: boolean;
 }
 
+const SparkleStar: React.FC<{ color?: string }> = ({ color = '#ffffff' }) => (
+  <div className="w-full h-full relative flex items-center justify-center filter drop-shadow-[0_0_6px_rgba(255,255,255,0.95)]">
+    <svg viewBox="0 0 24 24" className="w-full h-full" fill="none">
+      <path
+        d="M12 0 C12 6.6 6.6 12 0 12 C6.6 12 12 17.4 12 24 C12 17.4 17.4 12 24 12 C17.4 12 12 6.6 12 0 Z"
+        fill={color}
+      />
+      <circle cx="12" cy="12" r="2.5" fill="#ffffff" />
+    </svg>
+  </div>
+);
+
 export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
   card,
   isGameRunning = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+
+  // Determina si este Pokémon es icónico para aplicarle bordes holográficos TCG
+  const hasHoloBorder = Boolean(card.isIconic ?? card.isEx);
 
   // Motion values para tilt 3D (grados)
   const rawX = useMotionValue(0); // rotateY (-16 a 16)
@@ -96,10 +111,12 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
           className="absolute inset-0 rounded-[20px] overflow-hidden"
           style={{
             background: '#0a0d16',
-            boxShadow: `0 0 65px -10px ${card.theme.glow}, 0 28px 50px -15px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(255,255,255,0.15)`,
+            boxShadow: hasHoloBorder
+              ? `0 0 75px -6px ${card.theme.glow}, 0 28px 50px -15px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(255,255,255,0.2)`
+              : `0 0 65px -10px ${card.theme.glow}, 0 28px 50px -15px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(255,255,255,0.15)`,
           }}
         >
-          {/* MARCO METÁLICO BISELADO */}
+          {/* MARCO METÁLICO BISELADO BASE */}
           <div
             className="absolute inset-0 rounded-[20px] pointer-events-none z-30"
             style={{
@@ -115,15 +132,111 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
             }}
           />
 
+          {/* 1. PRISMA HOLOGRÁFICO EN EL MARCO (POKÉMON ICÓNICOS) */}
+          {hasHoloBorder && (
+            <div
+              className="absolute inset-0 rounded-[20px] pointer-events-none z-30 animate-border-holo"
+              style={{
+                padding: '7px',
+                background: isGoldBorder
+                  ? 'linear-gradient(115deg, #fef08a 0%, #f59e0b 20%, #ec4899 40%, #8b5cf6 60%, #06b6d4 80%, #fef08a 100%)'
+                  : 'linear-gradient(115deg, #ff0080 0%, #ff8c00 16%, #facc15 32%, #40e0d0 48%, #7c3aed 64%, #00f5a0 80%, #ff0080 100%)',
+                backgroundSize: '280% 280%',
+                WebkitMask:
+                  'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                WebkitMaskComposite: 'destination-out',
+                maskComposite: 'exclude',
+                mixBlendMode: 'color-dodge',
+                opacity: isHovered ? 0.85 : 0.65,
+                transition: 'opacity 0.3s ease',
+              }}
+            />
+          )}
+
+          {/* 2. BARRIDO DE LUZ METÁLICO CONTINUO POR EL MARCO */}
+          {hasHoloBorder && (
+            <div
+              className="absolute inset-0 rounded-[20px] pointer-events-none z-30 animate-holo-continuous"
+              style={{
+                padding: '7px',
+                background:
+                  'linear-gradient(125deg, transparent 25%, rgba(255,255,255,0.4) 42%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0.4) 58%, transparent 75%)',
+                backgroundSize: '240% 240%',
+                WebkitMask:
+                  'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                WebkitMaskComposite: 'destination-out',
+                maskComposite: 'exclude',
+                mixBlendMode: 'screen',
+                opacity: isHovered ? 0.9 : 0.55,
+                transition: 'opacity 0.3s ease',
+              }}
+            />
+          )}
+
+          {/* 3. REFLEJO REACTIVO AL TILT 3D DEL CURSOR EN EL BORDE */}
+          {hasHoloBorder && (
+            <motion.div
+              className="absolute inset-0 rounded-[20px] pointer-events-none z-30"
+              style={{
+                padding: '7px',
+                background: `radial-gradient(circle at ${pointerX.get()} ${pointerY.get()}, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.45) 25%, transparent 65%)`,
+                WebkitMask:
+                  'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                WebkitMaskComposite: 'destination-out',
+                maskComposite: 'exclude',
+                mixBlendMode: 'overlay',
+                opacity: isHovered ? 0.9 : 0.5,
+                transition: 'opacity 0.3s ease',
+              }}
+            />
+          )}
+
           {/* INNER BEVEL LINE */}
           <div
             className="absolute inset-[6px] rounded-[15px] border pointer-events-none z-30"
             style={{
               borderColor: isGoldBorder
-                ? 'rgba(254,240,138,0.4)'
+                ? 'rgba(254,240,138,0.7)'
+                : hasHoloBorder
+                ? 'rgba(255,255,255,0.6)'
                 : 'rgba(255,255,255,0.3)',
+              boxShadow: hasHoloBorder
+                ? isGoldBorder
+                  ? '0 0 10px rgba(234,179,8,0.5), inset 0 0 8px rgba(234,179,8,0.4)'
+                  : `0 0 8px ${card.theme.glow}, inset 0 0 6px rgba(255,255,255,0.4)`
+                : undefined,
             }}
           />
+
+          {/* 4. CHISPAS Y ESTRELLAS HOLOGRÁFICAS EN EL BORDE (POKÉMON ICÓNICOS) */}
+          {hasHoloBorder && (
+            <div className="absolute inset-0 rounded-[20px] pointer-events-none z-35 overflow-hidden">
+              {/* Esquina superior izquierda */}
+              <div className="absolute top-[3px] left-[5px] w-3 h-3 animate-holo-twinkle-1">
+                <SparkleStar color={isGoldBorder ? '#fde047' : '#ffffff'} />
+              </div>
+              {/* Esquina superior derecha */}
+              <div className="absolute top-[4px] right-[6px] w-3.5 h-3.5 animate-holo-twinkle-2">
+                <SparkleStar color={card.theme.primary} />
+              </div>
+              {/* Borde lateral izquierdo */}
+              <div className="absolute top-[48%] left-[1.5px] w-2.5 h-2.5 animate-holo-twinkle-3">
+                <SparkleStar color={isGoldBorder ? '#fef08a' : '#38bdf8'} />
+              </div>
+              {/* Borde lateral derecho */}
+              <div className="absolute top-[36%] right-[1.5px] w-3 h-3 animate-holo-twinkle-4">
+                <SparkleStar color={card.theme.secondary} />
+              </div>
+              {/* Esquina inferior izquierda */}
+              <div className="absolute bottom-[4px] left-[5px] w-3 h-3 animate-holo-twinkle-5">
+                <SparkleStar color={isGoldBorder ? '#fef08a' : '#f472b6'} />
+              </div>
+              {/* Esquina inferior derecha */}
+              <div className="absolute bottom-[3px] right-[5px] w-3.5 h-3.5 animate-holo-twinkle-1">
+                <SparkleStar color={isGoldBorder ? '#fde047' : '#ffffff'} />
+              </div>
+            </div>
+          )}
 
           {/* FONDO FULL ART ELEMENTAL ILUSTRADO */}
           <div

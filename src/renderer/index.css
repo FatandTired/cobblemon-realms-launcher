@@ -33,8 +33,51 @@ button, [data-theme-reactive] {
   }
 }
 
+@keyframes border-holo-sweep {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes holo-sparkle-twinkle {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(0.55) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25) rotate(20deg);
+  }
+}
+
 .animate-holo-continuous {
   animation: holo-sweep-continuous 5s ease-in-out infinite;
+}
+
+.animate-border-holo {
+  animation: border-holo-sweep 4s ease-in-out infinite;
+}
+
+.animate-holo-twinkle-1 {
+  animation: holo-sparkle-twinkle 2.2s ease-in-out infinite;
+}
+.animate-holo-twinkle-2 {
+  animation: holo-sparkle-twinkle 2.8s ease-in-out infinite 0.6s;
+}
+.animate-holo-twinkle-3 {
+  animation: holo-sparkle-twinkle 2.5s ease-in-out infinite 1.2s;
+}
+.animate-holo-twinkle-4 {
+  animation: holo-sparkle-twinkle 3.2s ease-in-out infinite 0.3s;
+}
+.animate-holo-twinkle-5 {
+  animation: holo-sparkle-twinkle 2.6s ease-in-out infinite 1.7s;
 }
 
 /* Estilos de barras de desplazamiento personalizadas estilo Dark Gaming */

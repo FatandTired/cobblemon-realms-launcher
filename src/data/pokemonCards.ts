@@ -45,6 +45,7 @@ export interface PokemonCard {
   isEx: boolean;
   hp: number;
   isTeracristal?: boolean;
+  isIconic?: boolean;
   rarity: PokemonCardRarity;
   rarityLabel: string;
   rarityStars: string;
@@ -73,6 +74,7 @@ export const POKEMON_CARDS: PokemonCard[] = [
     isEx: true,
     hp: 330,
     isTeracristal: true,
+    isIconic: true,
     rarity: 'special-illustration-rare',
     rarityLabel: 'SPECIAL ILLUSTRATION RARE',
     rarityStars: '★★',
@@ -112,6 +114,7 @@ export const POKEMON_CARDS: PokemonCard[] = [
     stage: 'FASE 2',
     isEx: true,
     hp: 310,
+    isIconic: true,
     rarity: 'special-illustration-rare',
     rarityLabel: 'SPECIAL ILLUSTRATION RARE',
     rarityStars: '★★',
@@ -151,6 +154,7 @@ export const POKEMON_CARDS: PokemonCard[] = [
     stage: 'BÁSICO',
     isEx: true,
     hp: 280,
+    isIconic: true,
     rarity: 'hyper-rare',
     rarityLabel: 'HYPER RARE',
     rarityStars: '★★★',
@@ -228,6 +232,7 @@ export const POKEMON_CARDS: PokemonCard[] = [
     stage: 'FASE 1',
     isEx: true,
     hp: 270,
+    isIconic: true,
     rarity: 'special-illustration-rare',
     rarityLabel: 'SPECIAL ILLUSTRATION RARE',
     rarityStars: '★★',
@@ -268,6 +273,7 @@ export const POKEMON_CARDS: PokemonCard[] = [
     stage: 'FASE 2',
     isEx: true,
     hp: 320,
+    isIconic: true,
     rarity: 'special-illustration-rare',
     rarityLabel: 'SPECIAL ILLUSTRATION RARE',
     rarityStars: '★★',
@@ -308,6 +314,7 @@ export const POKEMON_CARDS: PokemonCard[] = [
     stage: 'BÁSICO',
     isEx: true,
     hp: 300,
+    isIconic: true,
     rarity: 'hyper-rare',
     rarityLabel: 'HYPER RARE',
     rarityStars: '★★★',
@@ -347,6 +354,7 @@ export const POKEMON_CARDS: PokemonCard[] = [
     stage: 'FASE 2',
     isEx: true,
     hp: 310,
+    isIconic: true,
     rarity: 'special-illustration-rare',
     rarityLabel: 'SPECIAL ILLUSTRATION RARE',
     rarityStars: '★★',
@@ -386,6 +394,7 @@ export const POKEMON_CARDS: PokemonCard[] = [
     stage: 'BÁSICO',
     isEx: true,
     hp: 160,
+    isIconic: true,
     rarity: 'illustration-rare',
     rarityLabel: 'ILLUSTRATION RARE',
     rarityStars: '★',
@@ -462,6 +471,7 @@ export const POKEMON_CARDS: PokemonCard[] = [
     stage: 'BÁSICO',
     isEx: true,
     hp: 330,
+    isIconic: true,
     rarity: 'special-illustration-rare',
     rarityLabel: 'SPECIAL ILLUSTRATION RARE',
     rarityStars: '★★',
