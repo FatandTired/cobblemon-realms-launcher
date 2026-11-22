@@ -24,9 +24,11 @@ export const TopBar: React.FC<TopBarProps> = ({ serverPing, serverOnline }) => {
     <header className="h-10 bg-canvas-card border-b border-canvas-border flex items-center justify-between px-3 window-drag-region z-50 select-none">
       {/* Brand Logo & Name */}
       <div className="flex items-center space-x-2.5">
-        <div className="w-6 h-6 rounded-md bg-gradient-to-br from-cobble-red via-red-600 to-rose-700 flex items-center justify-center shadow-glow-red">
-          <div className="w-2.5 h-2.5 rounded-full bg-white border border-slate-900 shadow-sm" />
-        </div>
+        <img
+          src="/icon/icon.png"
+          alt="Cobblemon Realms"
+          className="w-6 h-6 rounded-md object-contain select-none pointer-events-none drop-shadow-sm"
+        />
         <div className="flex items-center space-x-1.5">
           <span className="font-extrabold text-xs tracking-wider text-white uppercase">Cobblemon</span>
           <span className="text-xs font-semibold text-cobble-cyan tracking-wider uppercase">Realms</span>

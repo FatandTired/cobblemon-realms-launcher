@@ -74,9 +74,26 @@ const getHtmlPath = (): string => {
   return path.join(appPath, 'dist/index.html');
 };
 
+const getIconPath = (): string | undefined => {
+  const appPath = app.getAppPath();
+  const candidates = [
+    path.join(appPath, 'public/icon/icon.png'),
+    path.join(appPath, 'dist/icon/icon.png'),
+    path.join(getSafeDirname(), '../../public/icon/icon.png'),
+    path.join(getSafeDirname(), '../../dist/icon/icon.png'),
+    path.join(process.cwd(), 'public/icon/icon.png'),
+    path.join(process.cwd(), 'dist/icon/icon.png')
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return undefined;
+};
+
 function createWindow() {
   const settings = store.getSettings();
   const preloadPath = getPreloadPath();
+  const iconPath = getIconPath();
 
   mainWindow = new BrowserWindow({
     width: settings.windowWidth || 1280,
@@ -86,6 +103,7 @@ function createWindow() {
     frame: false,
     backgroundColor: '#0b0f19',
     show: false,
+    ...(iconPath ? { icon: iconPath } : {}),
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
