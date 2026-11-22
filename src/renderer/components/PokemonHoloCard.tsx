@@ -119,170 +119,150 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
         }}
       >
         {/* ============================================================== */}
-        {/* AURA HOLOGRÁFICA PERIMETRAL EXTERIOR (LENS FLARES ARCOÍRIS)     */}
-        {/* ============================================================== */}
-        {hasHoloBorder && (
-          <div
-            className="absolute -inset-3.5 rounded-[30px] pointer-events-none animate-border-holo"
-            style={{
-              background:
-                'conic-gradient(from 180deg at 50% 50%, #ff0055 0deg, #ff9900 60deg, #00ff88 120deg, #00d4ff 180deg, #7928ca 240deg, #ff0080 300deg, #ff0055 360deg)',
-              filter: 'blur(14px)',
-              mixBlendMode: 'screen',
-              opacity: isHovered ? 0.82 : 0.52,
-              transition: 'opacity 0.3s ease',
-            }}
-          />
-        )}
-
-        {/* ============================================================== */}
         {/* CARA FRONTAL FULL ART / EX                                     */}
         {/* ============================================================== */}
         <div
           className="absolute inset-0 rounded-[20px] overflow-hidden"
           style={{
             background: '#0a0d16',
-            boxShadow: hasHoloBorder
-              ? `0 0 85px -5px ${card.theme.glow}, 0 28px 50px -15px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(255,255,255,0.4)`
-              : `0 0 65px -10px ${card.theme.glow}, 0 28px 50px -15px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(255,255,255,0.15)`,
+            boxShadow:
+              '0 24px 48px -12px rgba(0, 0, 0, 0.9), 0 4px 14px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.25)',
           }}
         >
-          {/* MARCO METÁLICO BASE ESTILO TCG SCARLET & VIOLET (11px) */}
+          {/* BASE DEL BORDE BLANCO DE LA CARTA (11px, SIN SOBRESALIR) */}
           <div
             className="absolute inset-0 rounded-[20px] pointer-events-none z-30"
             style={{
               padding: '11px',
-              background: metallicBorder,
+              background: isGoldBorder
+                ? 'linear-gradient(135deg, #ffffff 0%, #fef9c3 25%, #fef08a 50%, #ffffff 75%, #fef9c3 100%)'
+                : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 25%, #f1f5f9 50%, #ffffff 75%, #e2e8f0 100%)',
               WebkitMask:
                 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
               WebkitMaskComposite: 'destination-out',
               maskComposite: 'exclude',
-              boxShadow: isGoldBorder
-                ? 'inset 0 0 16px rgba(234,179,8,0.6)'
-                : 'inset 0 0 14px rgba(255,255,255,0.7)',
+              boxShadow: 'inset 0 0 2px rgba(0,0,0,0.2)',
             }}
           />
 
-          {/* TEXTURA DE MICRO-GRANULADO METÁLICO FOIL */}
-          <div
-            className="absolute inset-0 rounded-[20px] pointer-events-none z-30 opacity-45"
-            style={{
-              padding: '11px',
-              backgroundImage:
-                'repeating-linear-gradient(45deg, rgba(255,255,255,0.22) 0px, rgba(255,255,255,0.22) 1px, transparent 1px, transparent 3px), repeating-linear-gradient(-45deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 1px, transparent 1px, transparent 3px)',
-              WebkitMask:
-                'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-              WebkitMaskComposite: 'destination-out',
-              maskComposite: 'exclude',
-              mixBlendMode: 'overlay',
-            }}
-          />
-
-          {/* 1. PRISMA ARCOÍRIS HOLOGRÁFICO EN EL MARCO (SOLGALEO EX STYLE) */}
+          {/* PATRÓN GASOLINA HOLOGRÁFICO (SOLO EN EL BORDE BLANCO DE POKÉMON ICÓNICOS) */}
           {hasHoloBorder && (
-            <div
-              className="absolute inset-0 rounded-[20px] pointer-events-none z-30 animate-border-holo"
-              style={{
-                padding: '11px',
-                background: isGoldBorder
-                  ? 'linear-gradient(115deg, #fef08a 0%, #f59e0b 16%, #ec4899 34%, #8b5cf6 52%, #06b6d4 70%, #10b981 85%, #fef08a 100%)'
-                  : 'linear-gradient(115deg, #ff0055 0%, #ff8c00 14%, #ffdd00 28%, #00ff88 44%, #00e5ff 60%, #7928ca 76%, #ff007f 90%, #ffdd00 100%)',
-                backgroundSize: '300% 300%',
-                WebkitMask:
-                  'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                WebkitMaskComposite: 'destination-out',
-                maskComposite: 'exclude',
-                mixBlendMode: 'color-dodge',
-                opacity: isHovered ? 0.95 : 0.82,
-                transition: 'opacity 0.3s ease',
-              }}
-            />
+            <>
+              {/* VETA 1: FLUIDO CROMÁTICO ONDULANTE DE ACEITE/GASOLINA */}
+              <div
+                className="absolute inset-0 rounded-[20px] pointer-events-none z-30 animate-gasoline"
+                style={{
+                  padding: '11px',
+                  background:
+                    'linear-gradient(125deg, #ff007f 0%, #7928ca 12%, #0070f3 25%, #00dfd8 38%, #10b981 50%, #facc15 62%, #f97316 75%, #ec4899 88%, #00e5ff 95%, #ff007f 100%)',
+                  backgroundSize: '300% 300%',
+                  WebkitMask:
+                    'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                  WebkitMaskComposite: 'destination-out',
+                  maskComposite: 'exclude',
+                  mixBlendMode: 'color-dodge',
+                  opacity: isHovered ? 0.95 : 0.82,
+                  transition: 'opacity 0.3s ease',
+                }}
+              />
+
+              {/* VETA 2: ANILLOS Y MANCHAS DE INTERFERENCIA IRIDISCENTE (OIL SLICK PATTERN) */}
+              <div
+                className="absolute inset-0 rounded-[20px] pointer-events-none z-30 animate-gasoline"
+                style={{
+                  padding: '11px',
+                  backgroundImage:
+                    'radial-gradient(ellipse at 18% 28%, rgba(6, 182, 212, 0.9) 0%, transparent 55%), radial-gradient(ellipse at 82% 72%, rgba(236, 72, 153, 0.9) 0%, transparent 55%), radial-gradient(ellipse at 72% 18%, rgba(234, 179, 8, 0.85) 0%, transparent 50%), radial-gradient(ellipse at 28% 82%, rgba(16, 185, 129, 0.85) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.9) 0%, transparent 60%)',
+                  backgroundSize: '220% 220%',
+                  WebkitMask:
+                    'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                  WebkitMaskComposite: 'destination-out',
+                  maskComposite: 'exclude',
+                  mixBlendMode: 'color-dodge',
+                  opacity: isHovered ? 0.85 : 0.72,
+                  transition: 'opacity 0.3s ease',
+                }}
+              />
+
+              {/* VETA 3: REFLEJO REACTIVO AL ÁNGULO DE VISTA (TILT 3D DE LA PELÍCULA DE GASOLINA) */}
+              <motion.div
+                className="absolute inset-0 rounded-[20px] pointer-events-none z-30"
+                style={{
+                  padding: '11px',
+                  background: `radial-gradient(circle at ${pointerX.get()} ${pointerY.get()}, rgba(255,255,255,0.95) 0%, rgba(6,182,212,0.6) 20%, rgba(236,72,153,0.5) 40%, rgba(250,204,21,0.4) 60%, transparent 75%)`,
+                  WebkitMask:
+                    'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                  WebkitMaskComposite: 'destination-out',
+                  maskComposite: 'exclude',
+                  mixBlendMode: 'overlay',
+                  opacity: isHovered ? 1 : 0.65,
+                  transition: 'opacity 0.3s ease',
+                }}
+              />
+
+              {/* VETA 4: BARRIDO DE LUZ BRILLANTE METÁLICA SOBRE LA GASOLINA */}
+              <div
+                className="absolute inset-0 rounded-[20px] pointer-events-none z-30 animate-holo-continuous"
+                style={{
+                  padding: '11px',
+                  background:
+                    'linear-gradient(125deg, transparent 25%, rgba(255,255,255,0.45) 42%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0.45) 58%, transparent 75%)',
+                  backgroundSize: '240% 240%',
+                  WebkitMask:
+                    'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                  WebkitMaskComposite: 'destination-out',
+                  maskComposite: 'exclude',
+                  mixBlendMode: 'screen',
+                  opacity: isHovered ? 0.85 : 0.55,
+                  transition: 'opacity 0.3s ease',
+                }}
+              />
+            </>
           )}
 
-          {/* 2. BARRIDO DE LUZ METÁLICO CONTINUO POR EL MARCO */}
-          {hasHoloBorder && (
-            <div
-              className="absolute inset-0 rounded-[20px] pointer-events-none z-30 animate-holo-continuous"
-              style={{
-                padding: '11px',
-                background:
-                  'linear-gradient(125deg, transparent 20%, rgba(255,255,255,0.4) 38%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0.4) 62%, transparent 80%)',
-                backgroundSize: '240% 240%',
-                WebkitMask:
-                  'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                WebkitMaskComposite: 'destination-out',
-                maskComposite: 'exclude',
-                mixBlendMode: 'screen',
-                opacity: isHovered ? 0.95 : 0.65,
-                transition: 'opacity 0.3s ease',
-              }}
-            />
-          )}
-
-          {/* 3. REFLEJO REACTIVO AL TILT 3D DEL CURSOR EN EL BORDE */}
-          {hasHoloBorder && (
-            <motion.div
-              className="absolute inset-0 rounded-[20px] pointer-events-none z-30"
-              style={{
-                padding: '11px',
-                background: `radial-gradient(circle at ${pointerX.get()} ${pointerY.get()}, rgba(255,255,255,1) 0%, rgba(255,255,255,0.5) 25%, transparent 65%)`,
-                WebkitMask:
-                  'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                WebkitMaskComposite: 'destination-out',
-                maskComposite: 'exclude',
-                mixBlendMode: 'overlay',
-                opacity: isHovered ? 1 : 0.65,
-                transition: 'opacity 0.3s ease',
-              }}
-            />
-          )}
-
-          {/* BISEL INTERIOR TROQUELADO: RANURA PROFUNDA + FILO METÁLICO */}
+          {/* BISEL INTERIOR QUE DEFINE EL BORDE BLANCO CON LA ILUSTRACIÓN */}
           <div
             className="absolute inset-[10px] rounded-[11px] pointer-events-none z-30"
             style={{
-              boxShadow: isGoldBorder
-                ? '0 0 0 1px rgba(0,0,0,0.8), 0 0 0 2px rgba(254,240,138,0.7), inset 0 0 4px rgba(0,0,0,0.65), 0 0 8px rgba(234,179,8,0.4)'
-                : hasHoloBorder
-                ? `0 0 0 1px rgba(0,0,0,0.75), 0 0 0 2px rgba(255,255,255,0.7), inset 0 0 4px rgba(0,0,0,0.6), 0 0 8px ${card.theme.glow}`
-                : '0 0 0 1px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.3)',
+              boxShadow:
+                '0 0 0 1px rgba(0,0,0,0.65), 0 0 0 2px rgba(255,255,255,0.6), inset 0 0 3px rgba(0,0,0,0.45)',
             }}
           />
 
-          {/* 4. CHISPAS Y ESTRELLAS HOLOGRÁFICAS EN EL BORDE (ESTILO SOLGALEO EX) */}
+          {/* CHISPAS Y ESTRELLAS HOLOGRÁFICAS EN EL BORDE BLANCO */}
           {hasHoloBorder && (
             <div className="absolute inset-0 rounded-[20px] pointer-events-none z-35 overflow-hidden">
               {/* Esquina superior izquierda */}
               <div className="absolute top-[4px] left-[7px] animate-holo-twinkle-1">
-                <SparkleStar color={isGoldBorder ? '#fde047' : '#ffffff'} size={15} />
+                <SparkleStar color="#ffffff" size={14} />
               </div>
               {/* Borde superior medio */}
               <div className="absolute top-[3px] left-[32%] animate-holo-twinkle-3">
-                <SparkleStar color={isGoldBorder ? '#fef08a' : '#38bdf8'} size={11} />
+                <SparkleStar color="#38bdf8" size={11} />
               </div>
               {/* Esquina superior derecha */}
               <div className="absolute top-[4px] right-[8px] animate-holo-twinkle-2">
-                <SparkleStar color={card.theme.primary} size={16} />
+                <SparkleStar color="#ec4899" size={15} />
               </div>
               {/* Borde lateral izquierdo */}
               <div className="absolute top-[46%] left-[2px] animate-holo-twinkle-4">
-                <SparkleStar color={isGoldBorder ? '#fef08a' : '#4ade80'} size={12} />
+                <SparkleStar color="#4ade80" size={12} />
               </div>
               {/* Borde lateral derecho */}
               <div className="absolute top-[36%] right-[2px] animate-holo-twinkle-5">
-                <SparkleStar color={card.theme.secondary} size={14} />
+                <SparkleStar color="#f59e0b" size={13} />
               </div>
               {/* Esquina inferior izquierda */}
               <div className="absolute bottom-[4px] left-[7px] animate-holo-twinkle-3">
-                <SparkleStar color={isGoldBorder ? '#fef08a' : '#f472b6'} size={14} />
+                <SparkleStar color="#c084fc" size={13} />
               </div>
               {/* Borde inferior medio */}
               <div className="absolute bottom-[3px] left-[48%] animate-holo-twinkle-4">
-                <SparkleStar color={isGoldBorder ? '#fde047' : '#ffffff'} size={11} />
+                <SparkleStar color="#38bdf8" size={11} />
               </div>
               {/* Esquina inferior derecha */}
               <div className="absolute bottom-[4px] right-[8px] animate-holo-twinkle-1">
-                <SparkleStar color={isGoldBorder ? '#fde047' : '#ffffff'} size={16} />
+                <SparkleStar color="#ffffff" size={15} />
               </div>
             </div>
           )}
