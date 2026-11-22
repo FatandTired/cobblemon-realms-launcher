@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Settings,
   Cpu,
-  Coffee,
   Terminal,
   FolderOpen,
   Save,
@@ -10,7 +9,8 @@ import {
   Sparkles,
   RotateCcw,
   Network,
-  Zap
+  Zap,
+  Check
 } from 'lucide-react';
 import { LauncherSettings, SystemInfo } from '../../shared/types';
 import { APP_CONFIG, calculateSafeRamSuggestion } from '../../shared/config';
@@ -19,14 +19,13 @@ interface SettingsPageProps {
   settings: LauncherSettings;
   onSaveSettings: (settings: Partial<LauncherSettings>) => Promise<void>;
   onOpenInstanceFolder: () => Promise<void>;
-  onBrowseJavaPath: () => Promise<string | null>;
+  onBrowseJavaPath?: () => Promise<string | null>;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   settings,
   onSaveSettings,
-  onOpenInstanceFolder,
-  onBrowseJavaPath
+  onOpenInstanceFolder
 }) => {
   const [form, setForm] = useState<LauncherSettings>({ ...settings });
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
@@ -59,13 +58,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     handleRamChange(safeSuggestionMb);
   };
 
-  const handleBrowseJava = async () => {
-    const selected = await onBrowseJavaPath();
-    if (selected) {
-      setForm((prev) => ({ ...prev, customJavaPath: selected, useAutomaticJava21: false }));
-    }
-  };
-
   const handleApplyPresetAikar = () => {
     setForm((prev) => ({
       ...prev,
@@ -76,7 +68,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const handleResetDefaults = () => {
     setForm({
       ...APP_CONFIG.DEFAULT_SETTINGS,
-      ramMaxMb: safeSuggestionMb
+      ramMaxMb: safeSuggestionMb,
+      useAutomaticJava21: true,
+      mockMode: false
     });
   };
 
@@ -84,7 +78,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     e.preventDefault();
     setIsSaving(true);
     try {
-      await onSaveSettings(form);
+      await onSaveSettings({
+        ...form,
+        useAutomaticJava21: true,
+        mockMode: false
+      });
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);
     } finally {
@@ -101,7 +99,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             Configuración del Launcher
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Ajustes de memoria RAM, descargas concurrentes de Delta Sync y runtime de Java 21.
+            Ajustes de memoria RAM, descargas concurrentes de Delta Sync y optimizaciones JVM.
           </p>
         </div>
 
@@ -128,7 +126,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <button
                 type="button"
                 onClick={handleApplyRecommendedRam}
-                className="text-[11px] bg-cobble-cyan/15 text-cobble-cyan hover:bg-cobble-cyan/25 px-2.5 py-0.5 rounded border border-cobble-cyan/30 flex items-center gap-1 transition-colors"
+                className="text-[11px] bg-cobble-cyan/15 text-cobble-cyan hover:bg-cobble-cyan/25 px-2.5 py-0.5 rounded border border-cobble-cyan/30 flex items-center gap-1 transition-colors cursor-pointer"
                 title="Aplica la RAM óptima calculada para tu hardware"
               >
                 <Zap className="w-3 h-3 inline" />
@@ -185,76 +183,23 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <select
                 value={form.downloadConcurrency || 8}
                 onChange={(e) => setForm((prev) => ({ ...prev, downloadConcurrency: Number(e.target.value) }))}
-                className="w-full bg-canvas border border-canvas-border focus:border-cobble-cyan rounded-lg px-3 py-2 text-xs text-white outline-none"
+                className="w-full bg-canvas border border-canvas-border focus:border-cobble-cyan rounded-lg px-3 py-2 text-xs text-white outline-none cursor-pointer"
               >
                 <option value={4}>4 hilos (Conexiones modestas)</option>
                 <option value={6}>6 hilos (Equilibrado)</option>
-                <option value={8}>8 hilos (Óptimo para CDN Oracle Keep-Alive)</option>
+                <option value={8}>8 hilos (Recomendado - Keep-Alive)</option>
               </select>
             </div>
 
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
-                URL del Manifiesto CDN
+                Servidor de Contenido
               </label>
-              <input
-                type="text"
-                disabled
-                value={APP_CONFIG.VPS.MANIFEST_URL}
-                className="w-full bg-canvas/50 border border-canvas-border rounded-lg px-3 py-2 text-xs text-slate-400 font-mono select-all cursor-not-allowed"
-              />
+              <div className="w-full bg-canvas/50 border border-canvas-border rounded-lg px-3 py-2 text-xs text-cobble-emerald flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-cobble-emerald animate-pulse" />
+                <span className="font-medium">Servidor Oficial Conectado</span>
+              </div>
             </div>
-          </div>
-        </div>
-
-        {/* Java Runtime Card */}
-        <div className="bg-canvas-card border border-canvas-border rounded-xl p-5 space-y-4">
-          <div className="flex items-center space-x-2">
-            <Coffee className="w-4 h-4 text-cobble-red" />
-            <h3 className="text-sm font-bold text-white">Runtime de Java 21</h3>
-          </div>
-
-          <div className="space-y-3">
-            <label className="flex items-center space-x-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.useAutomaticJava21}
-                onChange={(e) => setForm((prev) => ({ ...prev, useAutomaticJava21: e.target.checked }))}
-                className="w-4 h-4 rounded bg-canvas border-canvas-border text-cobble-cyan focus:ring-0 cursor-pointer"
-              />
-              <div>
-                <div className="text-xs font-semibold text-white">
-                  Descarga automática de Eclipse Temurin JRE 21 (Recomendado)
-                </div>
-                <div className="text-[11px] text-slate-400">
-                  El launcher detecta y descarga un Java 21 optimizado y aislado en su carpeta interna.
-                </div>
-              </div>
-            </label>
-
-            {!form.useAutomaticJava21 && (
-              <div className="pt-2 space-y-2">
-                <label className="block text-xs font-medium text-slate-300">
-                  Ruta de ejecutable personalizada (javaw.exe)
-                </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={form.customJavaPath}
-                    onChange={(e) => setForm((prev) => ({ ...prev, customJavaPath: e.target.value }))}
-                    placeholder="C:\Program Files\Java\jdk-21\bin\javaw.exe"
-                    className="flex-1 bg-canvas border border-canvas-border focus:border-cobble-cyan rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 outline-none font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleBrowseJava}
-                    className="px-3 py-2 rounded-lg bg-canvas-elevated hover:bg-slate-700 text-xs text-slate-200 border border-canvas-border transition-colors"
-                  >
-                    Examinar...
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -268,7 +213,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <button
               type="button"
               onClick={handleApplyPresetAikar}
-              className="text-xs text-cobble-cyan hover:underline flex items-center gap-1"
+              className="text-xs text-cobble-cyan hover:underline flex items-center gap-1 cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Cargar Flags Aikar (G1GC)</span>
@@ -284,39 +229,23 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           />
         </div>
 
-        {/* Local Instance & Mock Mode */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-canvas-card border border-canvas-border rounded-xl p-4 flex items-center justify-between">
-            <div>
-              <div className="text-xs font-bold text-white">Carpeta de Instancia</div>
-              <div className="text-[11px] text-slate-400 mt-0.5 font-mono">
-                %APPDATA%/{APP_CONFIG.PATHS.FOLDER_NAME}
-              </div>
+        {/* Local Instance Directory Card */}
+        <div className="bg-canvas-card border border-canvas-border rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <div className="text-xs font-bold text-white">Carpeta de Instancia del Juego</div>
+            <div className="text-[11px] text-slate-400 mt-0.5 font-mono">
+              %APPDATA%/{APP_CONFIG.PATHS.FOLDER_NAME}
             </div>
-            <button
-              type="button"
-              onClick={onOpenInstanceFolder}
-              className="p-2 rounded-lg bg-canvas hover:bg-slate-700 text-slate-300 border border-canvas-border transition-colors"
-              title="Abrir en Explorador de Windows"
-            >
-              <FolderOpen className="w-4 h-4" />
-            </button>
           </div>
-
-          <div className="bg-canvas-card border border-canvas-border rounded-xl p-4 flex items-center justify-between">
-            <div>
-              <div className="text-xs font-bold text-white">Modo Pruebas (Mock UI)</div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
-                Desactiva para conectar directamente al VPS de producción.
-              </div>
-            </div>
-            <input
-              type="checkbox"
-              checked={form.mockMode}
-              onChange={(e) => setForm((prev) => ({ ...prev, mockMode: e.target.checked }))}
-              className="w-4 h-4 rounded bg-canvas border-canvas-border text-cobble-cyan focus:ring-0 cursor-pointer"
-            />
-          </div>
+          <button
+            type="button"
+            onClick={onOpenInstanceFolder}
+            className="px-3 py-2 rounded-lg bg-canvas hover:bg-canvas-elevated text-slate-300 hover:text-white border border-canvas-border transition-colors flex items-center gap-2 text-xs font-semibold cursor-pointer"
+            title="Abrir en Explorador de Windows"
+          >
+            <FolderOpen className="w-4 h-4 text-cobble-cyan" />
+            <span>Abrir en Explorador</span>
+          </button>
         </div>
 
         {/* Action Buttons */}
@@ -324,7 +253,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           <button
             type="button"
             onClick={handleResetDefaults}
-            className="px-4 py-2 rounded-lg bg-canvas text-xs font-semibold text-slate-400 hover:text-white border border-canvas-border hover:bg-slate-800 transition-colors flex items-center gap-1.5"
+            className="px-4 py-2 rounded-lg bg-canvas text-xs font-semibold text-slate-400 hover:text-white border border-canvas-border hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Restablecer Predeterminados</span>
@@ -333,7 +262,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           <button
             type="submit"
             disabled={isSaving}
-            className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-cobble-cyan to-blue-600 text-white font-bold text-xs uppercase tracking-wider hover:brightness-110 shadow-glow-cyan flex items-center gap-2 transition-all"
+            className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-cobble-cyan to-blue-600 text-white font-bold text-xs uppercase tracking-wider hover:brightness-110 shadow-glow-cyan flex items-center gap-2 transition-all cursor-pointer"
           >
             <Save className="w-4 h-4" />
             <span>{isSaving ? 'Guardando...' : 'Guardar Ajustes'}</span>

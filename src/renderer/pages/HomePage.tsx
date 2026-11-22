@@ -62,20 +62,28 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-cyan-500/15 text-cobble-cyan border border-cyan-500/30">
                 NeoForge {loaderVer}
               </span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-canvas-elevated text-slate-300 border border-canvas-border flex items-center gap-1 font-mono">
-                <Globe className="w-3 h-3 text-cobble-emerald" /> CDN Oracle Conectado
+              <span
+                className="px-2.5 py-0.5 rounded text-[10px] font-medium bg-canvas-elevated text-cobble-emerald border border-canvas-border flex items-center gap-1.5 cursor-default"
+                title="Sincronización diferencial activa con el servidor oficial"
+              >
+                <span className="w-2 h-2 rounded-full bg-cobble-emerald animate-pulse" />
+                <span>Servidor Conectado</span>
               </span>
             </div>
             <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-2">
               Cobblemon <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400">Realms</span>
             </h1>
             <p className="text-sm text-slate-300 max-w-xl leading-relaxed">
-              Modpack oficial con sincronización diferencial Delta Sync desde el VPS. Modpack de {totalFiles} archivos ({totalSizeMb} MB) con soporte para 10 GB de RAM.
+              Modpack oficial con sincronización diferencial Delta Sync de alta velocidad. {totalFiles} archivos ({totalSizeMb} MB) optimizados para el servidor.
             </p>
           </div>
 
           {/* Quick Active Account Card */}
-          <div className="bg-canvas/80 backdrop-blur border border-canvas-border rounded-xl p-3 flex items-center space-x-3.5 min-w-[220px]">
+          <div
+            onClick={onSelectAccount}
+            className="bg-canvas/80 backdrop-blur border border-canvas-border hover:border-cobble-cyan/60 rounded-xl p-3 flex items-center space-x-3.5 min-w-[220px] cursor-pointer transition-colors group"
+            title="Haz clic para cambiar de cuenta"
+          >
             {activeAccount ? (
               <>
                 <img
@@ -87,8 +95,13 @@ export const HomePage: React.FC<HomePageProps> = ({
                   }}
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs text-slate-400">Jugando como</div>
-                  <div className="text-sm font-bold text-white truncate">{activeAccount.username}</div>
+                  <div className="text-xs text-slate-400 flex items-center justify-between">
+                    <span>Jugando como</span>
+                    <span className="text-[10px] text-cobble-cyan group-hover:underline">Cambiar</span>
+                  </div>
+                  <div className="text-sm font-bold text-white truncate group-hover:text-cobble-cyan transition-colors">
+                    {activeAccount.username}
+                  </div>
                   <div className="text-[10px] text-cobble-emerald flex items-center gap-1">
                     {activeAccount.type === 'microsoft' ? (
                       <>
@@ -130,8 +143,8 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
               <div>
                 <h3 className="text-sm font-bold text-white">{APP_CONFIG.SERVER.NAME}</h3>
-                <p className="text-xs text-slate-400 font-mono">
-                  {APP_CONFIG.SERVER.HOST}:{APP_CONFIG.SERVER.PORT}
+                <p className="text-xs text-slate-400">
+                  Servidor Oficial Multijugador
                 </p>
               </div>
             </div>
@@ -168,12 +181,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <Layers className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">Sincronización VPS Oracle</h3>
-                <p className="text-xs text-slate-400">8 Descargas Concurrentes (Keep-Alive + Gzip)</p>
+                <h3 className="text-sm font-bold text-white">Sincronización de Contenido</h3>
+                <p className="text-xs text-slate-400">Descargas Concurrentes (Keep-Alive + Gzip)</p>
               </div>
             </div>
             <span className="text-[11px] font-mono bg-emerald-500/15 text-cobble-emerald px-2 py-0.5 rounded border border-emerald-500/30">
-              CDN Activo
+              CDN Conectada
             </span>
           </div>
 
@@ -208,7 +221,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <span className="font-mono text-cobble-cyan font-bold">{progress.percentage}%</span>
                 <button
                   onClick={onAbort}
-                  className="px-2.5 py-1 rounded bg-rose-600/20 text-rose-300 hover:bg-rose-600/30 text-xs font-semibold transition-colors"
+                  className="px-2.5 py-1 rounded bg-rose-600/20 text-rose-300 hover:bg-rose-600/30 text-xs font-semibold transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -257,7 +270,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="w-4 h-4 text-cobble-emerald" />
                   <span>
-                    Listo para sincronizar y jugar con <b>{activeAccount.username}</b>. Fuente VPS: <b>{APP_CONFIG.VPS.BASE_URL}</b>
+                    Listo para sincronizar y jugar con <b>{activeAccount.username}</b>. Todos los sistemas en línea.
                   </span>
                 </div>
               ) : (

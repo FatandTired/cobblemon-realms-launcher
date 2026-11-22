@@ -1,23 +1,24 @@
 import React from 'react';
-import { Home, Users, Settings, Terminal, Radio, ShieldCheck, User } from 'lucide-react';
+import { Home, Settings, Terminal, ShieldCheck, User } from 'lucide-react';
 import { Account } from '../../shared/types';
 
-export type TabType = 'home' | 'accounts' | 'settings' | 'console';
+export type TabType = 'home' | 'settings' | 'console';
 
 interface SidebarProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   activeAccount: Account | null;
+  onOpenAccountModal: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onTabChange,
-  activeAccount
+  activeAccount,
+  onOpenAccountModal
 }) => {
   const navItems = [
     { id: 'home' as TabType, label: 'Inicio', icon: Home },
-    { id: 'accounts' as TabType, label: 'Cuentas', icon: Users },
     { id: 'settings' as TabType, label: 'Ajustes', icon: Settings },
     { id: 'console' as TabType, label: 'Consola', icon: Terminal },
   ];
@@ -51,13 +52,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Active Account Widget at Bottom */}
       <div className="p-3 border-t border-canvas-border bg-canvas/40">
-        <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-2 px-1">
-          Perfil Activo
+        <div className="flex items-center justify-between mb-2 px-1">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+            Perfil Activo
+          </span>
+          <button
+            onClick={onOpenAccountModal}
+            className="text-[10px] text-cobble-cyan hover:underline font-medium cursor-pointer"
+          >
+            Cambiar
+          </button>
         </div>
         {activeAccount ? (
           <div
-            onClick={() => onTabChange('accounts')}
-            className="flex items-center space-x-3 p-2 rounded-lg bg-canvas-card border border-canvas-border hover:border-slate-600 transition-colors cursor-pointer group"
+            onClick={onOpenAccountModal}
+            className="flex items-center space-x-3 p-2 rounded-lg bg-canvas-card border border-canvas-border hover:border-cobble-cyan/60 hover:bg-canvas-elevated transition-all cursor-pointer group"
+            title="Haz clic para cambiar de cuenta"
           >
             <div className="relative">
               <img
@@ -100,8 +110,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         ) : (
           <button
-            onClick={() => onTabChange('accounts')}
-            className="w-full py-2 px-3 rounded-lg border border-dashed border-slate-700 text-xs text-slate-400 hover:text-white hover:border-cobble-cyan transition-colors text-center"
+            onClick={onOpenAccountModal}
+            className="w-full py-2 px-3 rounded-lg border border-dashed border-slate-700 text-xs text-slate-400 hover:text-white hover:border-cobble-cyan transition-colors text-center cursor-pointer"
           >
             + Seleccionar Cuenta
           </button>

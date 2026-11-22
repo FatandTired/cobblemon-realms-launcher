@@ -27,13 +27,13 @@ export function calculateSafeRamSuggestion(totalMemoryMb: number, modpackRecomme
 }
 
 /**
- * CONFIGURACIÓN CENTRALIZADA DEL LAUNCHER (PRODUCCIÓN VPS ORACLE)
+ * CONFIGURACIÓN CENTRALIZADA DEL LAUNCHER (SERVIDOR OFICIAL)
  */
 export const APP_CONFIG = {
   APP_NAME: 'Cobblemon Realms Launcher',
   APP_VERSION: '1.0.0',
 
-  // Servidor de Archivos CDN (VPS Oracle en Producción)
+  // Servidor de Archivos CDN Oficial
   VPS: {
     BASE_URL: 'http://150.136.126.253:8080',
     MANIFEST_URL: 'http://150.136.126.253:8080/manifest.json',
@@ -146,7 +146,7 @@ export const APP_CONFIG = {
         timestamp: '00:00:02',
         level: 'INFO',
         source: 'launcher',
-        message: 'Conectando con CDN VPS Oracle: http://150.136.126.253:8080',
+        message: 'Conectando con el servidor de contenido oficial de Cobblemon Realms...',
       }
     ] as LogEntry[]
   }

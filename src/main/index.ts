@@ -143,18 +143,18 @@ function sendProgress(progress: DownloadProgress) {
 }
 
 async function fetchManifestFromVps(): Promise<ModpackManifest> {
-  sendLog('INFO', 'launcher', `Consultando manifest en VPS: ${APP_CONFIG.VPS.MANIFEST_URL}`);
+  sendLog('INFO', 'launcher', 'Consultando estado del modpack en el servidor de contenido...');
   try {
     const manifest = await fetchRemoteManifest(APP_CONFIG.VPS.MANIFEST_URL);
     cachedManifest = manifest;
     sendLog(
       'INFO',
       'launcher',
-      `CDN Activo: "${manifest.packName}" v${manifest.packVersion} (${manifest.totalFiles} archivos, ${(manifest.totalSize / (1024 * 1024)).toFixed(1)} MB)`
+      `Servidor de contenido conectado: "${manifest.packName}" v${manifest.packVersion} (${manifest.totalFiles} archivos, ${(manifest.totalSize / (1024 * 1024)).toFixed(1)} MB)`
     );
     return manifest;
   } catch (err: any) {
-    sendLog('WARN', 'launcher', `Fallo al consultar CDN: ${err.message}.`);
+    sendLog('WARN', 'launcher', `Aviso al consultar servidor de contenido: ${err.message}.`);
     if (cachedManifest) return cachedManifest;
     return APP_CONFIG.MOCK_DATA.manifest;
   }
@@ -308,31 +308,24 @@ function setupIpcHandlers() {
       currentSyncAbortController = new AbortController();
 
       // ==========================================
-      // ETAPA 1: Gestor de Java 21 Temurin (Persistente y Verificado)
+      // ETAPA 1: Gestor de Java 21 Temurin (Persistente, Verificado y Obligatorio)
       // ==========================================
-      let javaBinaries: { javaPath: string; javawPath: string };
-
-      if (settings.useAutomaticJava21 || !settings.customJavaPath || !fs.existsSync(settings.customJavaPath)) {
-        sendLog('INFO', 'launcher', 'Etapa 1/4: Asegurando runtime Java 21 Temurin persistente en disco...');
-        const validated = await ensurePersistentJava21(
-          runtimeDir,
-          (prog) => sendProgress(prog),
-          (msg) => sendLog('INFO', 'launcher', msg)
-        );
-        javaBinaries = { javaPath: validated.javaPath, javawPath: validated.javawPath };
-      } else {
-        sendLog('INFO', 'launcher', `Etapa 1/4: Utilizando Java personalizado: ${settings.customJavaPath}`);
-        javaBinaries = { javaPath: settings.customJavaPath, javawPath: settings.customJavaPath };
-      }
+      sendLog('INFO', 'launcher', 'Etapa 1/4: Verificando runtime Java 21 Temurin oficial...');
+      const validated = await ensurePersistentJava21(
+        runtimeDir,
+        (prog) => sendProgress(prog),
+        (msg) => sendLog('INFO', 'launcher', msg)
+      );
+      const javaBinaries = { javaPath: validated.javaPath, javawPath: validated.javawPath };
 
       // ==========================================
-      // ETAPA 2: Sincronización Diferencial VPS (Delta Sync Real)
+      // ETAPA 2: Sincronización Diferencial Oficial (Delta Sync Real)
       // ==========================================
-      sendLog('INFO', 'installer', 'Etapa 2/4: Sincronizando mods y configs desde el VPS Oracle...');
+      sendLog('INFO', 'installer', 'Etapa 2/4: Sincronizando mods y configuraciones con el servidor...');
       sendProgress({
         step: 'fetching_manifest',
         title: 'Consultando Manifiesto',
-        detail: 'Descargando manifest.json desde el VPS CDN...',
+        detail: 'Verificando manifest.json con el servidor oficial...',
         totalFiles: 0,
         completedFiles: 0,
         percentage: 5

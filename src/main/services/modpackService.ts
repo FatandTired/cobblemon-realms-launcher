@@ -417,7 +417,7 @@ export async function syncModpackFromVps(
 
       onProgress({
         step: 'syncing_files',
-        title: 'Descargando Mods y Configs (VPS Oracle)',
+        title: 'Descargando Mods y Configs',
         detail: `${(totalDownloadedBytes / (1024 * 1024)).toFixed(1)} MB / ${(totalBytesToDownload / (1024 * 1024)).toFixed(1)} MB (${downloadedCount}/${toDownload.length})`,
         currentFile: currentFilePath,
         totalFiles: toDownload.length,
