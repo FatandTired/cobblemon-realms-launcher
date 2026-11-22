@@ -162,7 +162,7 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
               src={card.artworkUrl}
               alt={card.name}
               draggable={false}
-              className="w-full h-full object-contain scale-[1.35] transition-transform duration-200 drop-shadow-2xl"
+              className="w-full h-full object-contain scale-[1.15] transition-transform duration-200 drop-shadow-2xl"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.opacity = '0.3';
               }}
