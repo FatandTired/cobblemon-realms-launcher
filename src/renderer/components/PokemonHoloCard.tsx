@@ -149,20 +149,20 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
           </div>
 
           {/* ============================================================== */}
-          {/* POKÉMON EN CAPA 3D (translateZ 50px) — PERFECTAMENTE CENTRADO   */}
+          {/* POKÉMON EN CAPA 3D — MUCHO MÁS GRANDE Y SOBRESALIENDO         */}
           {/* ============================================================== */}
           <motion.div
-            className="absolute top-[44px] bottom-[195px] left-2 right-2 z-10 pointer-events-none flex items-center justify-center overflow-visible"
+            className="absolute top-[24px] bottom-[50px] -left-2 -right-2 z-10 pointer-events-none flex items-center justify-center overflow-visible"
             style={{
-              transform: 'translateZ(50px)',
-              filter: `drop-shadow(${shadowX.get()}px ${shadowY.get()}px 16px rgba(0,0,0,0.85)) drop-shadow(0 0 14px ${card.theme.glow})`,
+              transform: 'translateZ(24px)',
+              filter: `drop-shadow(${shadowX.get()}px ${shadowY.get()}px 18px rgba(0,0,0,0.85)) drop-shadow(0 0 16px ${card.theme.glow})`,
             }}
           >
             <img
               src={card.artworkUrl}
               alt={card.name}
               draggable={false}
-              className="max-w-[95%] max-h-[95%] w-auto h-auto object-contain transition-transform duration-200 drop-shadow-md"
+              className="w-full h-full object-contain scale-[1.35] transition-transform duration-200 drop-shadow-2xl"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.opacity = '0.3';
               }}
@@ -237,7 +237,13 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
           {/* ============================================================== */}
           {/* CONTENIDO ANATÓMICO TCG EN ESPAÑOL                            */}
           {/* ============================================================== */}
-          <div className="relative z-25 h-full flex flex-col justify-between p-3.5 pt-3">
+          <div
+            className="relative z-30 h-full flex flex-col justify-between p-3.5 pt-3"
+            style={{
+              transform: 'translateZ(45px)',
+              transformStyle: 'preserve-3d',
+            }}
+          >
             {/* CABECERA: ETAPA, NOMBRE, LOGO EX, PS Y ENERGÍA */}
             <div className="flex items-center justify-between gap-1.5 h-[36px]">
               <div className="flex items-center gap-2 min-w-0">
@@ -296,13 +302,18 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
               </div>
             </div>
 
-            {/* ZONA INFERIOR: HABILIDAD Y ATAQUE CON GLASSMORPHISM */}
-            <div className="mt-auto mb-1 space-y-2">
+            {/* ZONA INFERIOR: HABILIDAD Y ATAQUE (ENCIMA DEL POKÉMON) */}
+            <div
+              className="mt-auto mb-1 space-y-2 relative z-30"
+              style={{
+                transform: 'translateZ(10px)',
+              }}
+            >
               <div
                 className="rounded-xl p-2.5 border backdrop-blur-md shadow-2xl space-y-2"
                 style={{
-                  background: 'rgba(5, 7, 13, 0.72)',
-                  borderColor: 'rgba(255, 255, 255, 0.14)',
+                  background: 'rgba(5, 7, 13, 0.78)',
+                  borderColor: 'rgba(255, 255, 255, 0.16)',
                 }}
               >
                 {/* HABILIDAD */}
