@@ -66,69 +66,63 @@ export const HomePage: React.FC<HomePageProps> = ({
   return (
     <div className="relative w-full h-full flex flex-col justify-between overflow-hidden select-none bg-[#07090e]">
       {/* ============================================================== */}
-      {/* 2. FONDO DINÁMICO CON ARTWORK DEL POKÉMON VISIBLE              */}
+      {/* 2. FONDO DINÁMICO CON WALLPAPER ARTWORK DEL POKÉMON            */}
       {/* ============================================================== */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeCard.id}
-            initial={{ opacity: 0, scale: 0.98 }}
+            initial={{ opacity: 0, scale: 1.02 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.02 }}
-            transition={{ duration: 0.6, ease: 'easeInOut' }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.65, ease: 'easeInOut' }}
             className="absolute inset-0"
           >
-            {/* Gradiente ambiental elemental */}
+            {/* WALLPAPER DEL POKÉMON EN ALTA RESOLUCIÓN */}
+            <div className="absolute inset-0 overflow-hidden">
+              <img
+                src={activeCard.backgroundImage}
+                alt={activeCard.name}
+                draggable={false}
+                className="w-full h-full object-cover object-center"
+                style={{
+                  filter: 'brightness(0.65) contrast(1.15)',
+                }}
+              />
+            </div>
+
+            {/* GRADIENTE AMBIENTAL ELEMENTAL */}
             <div
-              className="absolute inset-0"
+              className="absolute inset-0 pointer-events-none"
               style={{
-                background: `radial-gradient(ellipse at 50% 45%, ${activeCard.ambientGlow} 0%, rgba(7, 9, 14, 0.85) 60%, #07090e 100%)`,
+                background: `radial-gradient(ellipse at 50% 45%, ${activeCard.ambientGlow} 0%, rgba(7, 9, 14, 0.45) 60%, #07090e 95%)`,
+                mixBlendMode: 'multiply',
               }}
             />
-
-            {/* ARTWORK OFICIAL DESTACADO EN EL FONDO (NÍTIDO Y VISIBLE) */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-              <img
-                src={activeCard.artworkUrl}
-                alt={activeCard.name}
-                draggable={false}
-                className="w-[580px] h-[580px] max-w-none object-contain opacity-25 drop-shadow-[0_0_90px_var(--theme-glow)] scale-110 transition-all duration-700"
-              />
-            </div>
-
-            {/* Silueta ambiental secundaria a la derecha */}
-            <div className="absolute -right-16 top-1/2 -translate-y-1/2 w-[500px] h-[500px] pointer-events-none opacity-15 overflow-hidden">
-              <img
-                src={activeCard.artworkUrl}
-                alt={activeCard.name}
-                draggable={false}
-                className="w-full h-full object-contain drop-shadow-2xl"
-              />
-            </div>
 
             {/* Acentos de iluminación elemental */}
             {activeCard.primaryType === 'fire' && (
               <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute bottom-1/4 left-1/4 w-80 h-80 rounded-full bg-orange-600/15 blur-3xl animate-pulse" />
-                <div className="absolute top-1/3 right-1/4 w-80 h-80 rounded-full bg-red-600/15 blur-3xl" />
+                <div className="absolute bottom-1/4 left-1/4 w-80 h-80 rounded-full bg-orange-600/20 blur-3xl animate-pulse" />
+                <div className="absolute top-1/3 right-1/4 w-80 h-80 rounded-full bg-red-600/20 blur-3xl" />
               </div>
             )}
             {activeCard.primaryType === 'water' && (
               <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-1/4 left-1/3 w-80 h-80 rounded-full bg-cyan-600/15 blur-3xl animate-pulse" />
-                <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-indigo-600/15 blur-3xl" />
+                <div className="absolute top-1/4 left-1/3 w-80 h-80 rounded-full bg-cyan-600/20 blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-indigo-600/20 blur-3xl" />
               </div>
             )}
             {activeCard.primaryType === 'psychic' && (
               <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-1/3 left-1/4 w-80 h-80 rounded-full bg-purple-600/20 blur-3xl animate-pulse" />
-                <div className="absolute bottom-1/4 right-1/3 w-80 h-80 rounded-full bg-pink-600/15 blur-3xl" />
+                <div className="absolute top-1/3 left-1/4 w-80 h-80 rounded-full bg-purple-600/25 blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/4 right-1/3 w-80 h-80 rounded-full bg-pink-600/20 blur-3xl" />
               </div>
             )}
             {activeCard.primaryType === 'grass' && (
               <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-1/4 right-1/4 w-80 h-80 rounded-full bg-emerald-600/15 blur-3xl animate-pulse" />
-                <div className="absolute bottom-1/3 left-1/3 w-80 h-80 rounded-full bg-lime-600/15 blur-3xl" />
+                <div className="absolute top-1/4 right-1/4 w-80 h-80 rounded-full bg-emerald-600/20 blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/3 left-1/3 w-80 h-80 rounded-full bg-lime-600/20 blur-3xl" />
               </div>
             )}
 
@@ -137,7 +131,16 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="absolute inset-0 pointer-events-none"
               style={{
                 background:
-                  'radial-gradient(ellipse at center, transparent 30%, rgba(7, 9, 14, 0.72) 70%, #07090e 100%)',
+                  'radial-gradient(ellipse at center, transparent 20%, rgba(7, 9, 14, 0.55) 60%, #07090e 95%)',
+              }}
+            />
+
+            {/* Gradiente sutil inferior detrás de la barra de jugar */}
+            <div
+              className="absolute bottom-0 inset-x-0 h-40 pointer-events-none"
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(7, 9, 14, 0.95) 0%, rgba(7, 9, 14, 0.4) 60%, transparent 100%)',
               }}
             />
           </motion.div>
