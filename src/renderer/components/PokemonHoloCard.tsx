@@ -149,20 +149,20 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
           </div>
 
           {/* ============================================================== */}
-          {/* POKÉMON EN CAPA 3D — MUCHO MÁS GRANDE Y SOBRESALIENDO         */}
+          {/* POKÉMON EN CAPA 3D — CENTRADO Y LIGERAMENTE AGRANDADO         */}
           {/* ============================================================== */}
           <motion.div
-            className="absolute top-[24px] bottom-[50px] -left-2 -right-2 z-10 pointer-events-none flex items-center justify-center overflow-visible"
+            className="absolute top-[42px] bottom-[180px] left-2 right-2 z-10 pointer-events-none flex items-center justify-center overflow-visible"
             style={{
-              transform: 'translateZ(24px)',
-              filter: `drop-shadow(${shadowX.get()}px ${shadowY.get()}px 18px rgba(0,0,0,0.85)) drop-shadow(0 0 16px ${card.theme.glow})`,
+              transform: 'translateZ(26px)',
+              filter: `drop-shadow(${shadowX.get()}px ${shadowY.get()}px 16px rgba(0,0,0,0.85)) drop-shadow(0 0 14px ${card.theme.glow})`,
             }}
           >
             <img
               src={card.artworkUrl}
               alt={card.name}
               draggable={false}
-              className="w-full h-full object-contain scale-[1.15] transition-transform duration-200 drop-shadow-2xl"
+              className="max-w-full max-h-full w-auto h-auto object-contain scale-[1.08] transition-transform duration-200 drop-shadow-xl"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.opacity = '0.3';
               }}
