@@ -13,6 +13,7 @@ export type EnergyType =
   | 'darkness'
   | 'lightning'
   | 'fighting'
+  | 'dragon'
   | 'colorless';
 
 export type PokemonCardRarity =
@@ -214,6 +215,86 @@ export const POKEMON_CARDS: PokemonCard[] = [
     weakness: { type: 'fire', value: '×2' },
     retreatCost: 1,
     collectionCode: '001/151',
+    collectorSet: 'CBR ES',
+  },
+  {
+    id: 'espeon',
+    number: '#196',
+    name: 'Espeon',
+    artworkUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/196.png',
+    backgroundImage: '/backgrounds/espeon.png',
+    types: ['PSÍQUICO'],
+    primaryType: 'psychic',
+    stage: 'FASE 1',
+    isEx: true,
+    hp: 270,
+    rarity: 'special-illustration-rare',
+    rarityLabel: 'SPECIAL ILLUSTRATION RARE',
+    rarityStars: '★★',
+    theme: {
+      primary: '#d946ef',
+      secondary: '#818cf8',
+      glow: 'rgba(217, 70, 239, 0.44)',
+      soft: 'rgba(217, 70, 239, 0.15)',
+    },
+    typeGradient: 'linear-gradient(145deg, #200438 0%, #3b0764 40%, #0f011c 100%)',
+    ambientGlow: 'rgba(217, 70, 239, 0.28)',
+    ability: {
+      name: 'Cuerpo Solar',
+      description:
+        'Previene todos los efectos de ataques de los Pokémon de tu rival hechos a tus Pokémon que tengan Energía unida.',
+    },
+    attack: {
+      name: 'Impacto Psíquico',
+      damage: '160',
+      energyCost: ['psychic', 'colorless', 'colorless'],
+      description:
+        'El daño de este ataque no se ve afectado por ningún efecto en el Pokémon Activo de tu rival.',
+    },
+    weakness: { type: 'darkness', value: '×2' },
+    resistance: { type: 'fighting', value: '-30' },
+    retreatCost: 1,
+    collectionCode: '196/151',
+    collectorSet: 'CBR ES',
+  },
+  {
+    id: 'salamence',
+    number: '#373',
+    name: 'Salamence',
+    artworkUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/373.png',
+    backgroundImage: '/backgrounds/salamence.png',
+    types: ['DRAGÓN', 'VOLADOR'],
+    primaryType: 'dragon',
+    stage: 'FASE 2',
+    isEx: true,
+    hp: 320,
+    rarity: 'special-illustration-rare',
+    rarityLabel: 'SPECIAL ILLUSTRATION RARE',
+    rarityStars: '★★',
+    theme: {
+      primary: '#0284c7',
+      secondary: '#ef4444',
+      glow: 'rgba(2, 132, 199, 0.44)',
+      soft: 'rgba(2, 132, 199, 0.15)',
+    },
+    typeGradient: 'linear-gradient(145deg, #051a33 0%, #0f274a 40%, #020814 100%)',
+    ambientGlow: 'rgba(2, 132, 199, 0.28)',
+    ability: {
+      name: 'Alas Tempestuosas',
+      description:
+        'Una vez durante tu turno, puedes cambiar a tu Pokémon Activo por 1 de tus Pokémon en Banca.',
+    },
+    attack: {
+      name: 'Impacto Draconiano',
+      damage: '220',
+      energyCost: ['fire', 'water', 'colorless'],
+      description:
+        'Este ataque hace 30 puntos de daño a cada uno de los Pokémon en Banca de tu rival.',
+    },
+    weakness: { type: 'lightning', value: '×2' },
+    resistance: { type: 'fighting', value: '-30' },
+    retreatCost: 2,
+    collectionCode: '373/151',
     collectorSet: 'CBR ES',
   },
 ];

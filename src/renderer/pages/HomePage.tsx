@@ -54,9 +54,11 @@ export const HomePage: React.FC<HomePageProps> = ({
   onChangeCard,
   isAppReady = true,
 }) => {
-  const isLaunching = progress && progress.step !== 'idle' && progress.step !== 'error';
+  const isLaunching =
+    progress && progress.step !== 'idle' && progress.step !== 'error';
   const mcVer = manifest?.minecraftVersion || APP_CONFIG.MINECRAFT.VERSION;
-  const loaderVer = manifest?.loader?.version || APP_CONFIG.MINECRAFT.LOADER_VERSION;
+  const loaderVer =
+    manifest?.loader?.version || APP_CONFIG.MINECRAFT.LOADER_VERSION;
   const totalFiles = manifest?.totalFiles || 2122;
   const totalSizeMb = manifest?.totalSize
     ? (manifest.totalSize / (1024 * 1024)).toFixed(0)
@@ -125,6 +127,12 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-1/4 right-1/4 w-80 h-80 rounded-full bg-emerald-600/20 blur-3xl animate-pulse" />
                 <div className="absolute bottom-1/3 left-1/3 w-80 h-80 rounded-full bg-lime-600/20 blur-3xl" />
+              </div>
+            )}
+            {activeCard.primaryType === 'dragon' && (
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-1/3 left-1/3 w-80 h-80 rounded-full bg-sky-600/20 blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-red-600/20 blur-3xl" />
               </div>
             )}
 
@@ -261,14 +269,15 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* CENTRO: CARTA POKÉMON PROTAGONISTA */}
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.94 }}
-          animate={isAppReady ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.94 }}
+          animate={
+            isAppReady
+              ? { opacity: 1, y: 0, scale: 1 }
+              : { opacity: 0, y: 16, scale: 0.94 }
+          }
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
           className="flex flex-col items-center gap-2.5 flex-shrink-0"
         >
-          <PokemonHoloCard
-            card={activeCard}
-            isGameRunning={isGameRunning}
-          />
+          <PokemonHoloCard card={activeCard} isGameRunning={isGameRunning} />
 
           {/* Botón discreto para cambiar de carta */}
           <button
@@ -429,9 +438,10 @@ export const HomePage: React.FC<HomePageProps> = ({
                       MB/s
                     </span>
                   )}
-                {progress.etaSeconds !== undefined && progress.etaSeconds > 0 && (
-                  <span>ETA: {progress.etaSeconds}s</span>
-                )}
+                {progress.etaSeconds !== undefined &&
+                  progress.etaSeconds > 0 && (
+                    <span>ETA: {progress.etaSeconds}s</span>
+                  )}
               </div>
             </div>
           </div>
@@ -447,12 +457,6 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <b className="text-white font-bold">
                       {activeAccount.username}
                     </b>{' '}
-                    <span className="text-[11px] text-slate-400">
-                      ({activeAccount.type === 'microsoft'
-                        ? 'Cuenta Premium'
-                        : 'No-Premium'}
-                      )
-                    </span>
                   </span>
                 </div>
               ) : (

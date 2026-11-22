@@ -91,6 +91,17 @@ export const EnergyIcon: React.FC<EnergyIconProps> = ({
             />
           ),
         };
+      case 'dragon':
+        return {
+          bg: 'linear-gradient(135deg, #a16207 0%, #451a03 100%)',
+          border: '#fde047',
+          symbol: (
+            <path
+              d="M7 2c-1.5 1-2.5 3-2.5 5 0 2 1.5 3.5 2.5 4 1-.5 2.5-2 2.5-4 0-2-1-4-2.5-5zm-2 4c-.5.8-.8 1.8-.8 2.5 0 1.5 1 2.5 2 3-1-.5-2-1.8-2-3 0-.8.3-1.7.8-2.5zm4 0c.5.8.8 1.8.8 2.5 0 1.2-1 2.5-2 3 1-.5 2-1.5 2-3 0-.7-.3-1.7-.8-2.5z"
+              fill="#ffffff"
+            />
+          ),
+        };
       case 'colorless':
       default:
         return {
