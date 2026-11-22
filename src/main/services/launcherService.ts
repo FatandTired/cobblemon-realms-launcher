@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
+import http from 'http';
 import { spawn, ChildProcess } from 'child_process';
 import { launch, Version } from '@xmcl/core';
 import {
@@ -110,6 +111,240 @@ async function downloadNeoForgeInstaller(
 }
 
 /**
+ * Garantiza que exista un archivo launcher_profiles.json válido en la instancia.
+ * El instalador oficial de NeoForge requiere obligatoriamente este archivo para no abortar la instalación.
+ */
+function ensureLauncherProfilesJson(instanceDir: string): void {
+  const profilesPath = path.join(instanceDir, 'launcher_profiles.json');
+  if (!fs.existsSync(profilesPath)) {
+    const defaultProfiles = {
+      profiles: {
+        neoforge: {
+          name: 'neoforge',
+          type: 'custom',
+          created: '2026-01-01T00:00:00.000Z',
+          lastUsed: '2026-01-01T00:00:00.000Z',
+          icon: 'Grass'
+        }
+      },
+      settings: {
+        crashAssistance: true,
+        enableAdvanced: true
+      },
+      version: 3
+    };
+    try {
+      fs.writeFileSync(profilesPath, JSON.stringify(defaultProfiles, null, 2), 'utf-8');
+    } catch (err) {
+      console.warn('Aviso: No se pudo crear launcher_profiles.json:', err);
+    }
+  }
+}
+
+/**
+ * Descarga un archivo por HTTPS/HTTP con soporte para redirecciones y escritura atómica (.tmp -> rename).
+ */
+export function downloadFile(url: string, destPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const dir = path.dirname(destPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    const tmpPath = `${destPath}.tmp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const protocol = url.startsWith('https') ? https : http;
+
+    const request = protocol.get(url, (res) => {
+      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume();
+        return downloadFile(res.headers.location, destPath).then(resolve, reject);
+      }
+
+      if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+        res.resume();
+        return reject(new Error(`HTTP ${res.statusCode} descargando ${url}`));
+      }
+
+      const fileStream = fs.createWriteStream(tmpPath);
+      res.pipe(fileStream);
+
+      fileStream.on('finish', () => {
+        fileStream.close(() => {
+          try {
+            if (fs.existsSync(destPath)) {
+              fs.unlinkSync(destPath);
+            }
+            fs.renameSync(tmpPath, destPath);
+            resolve();
+          } catch (err) {
+            try { if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath); } catch {}
+            reject(err);
+          }
+        });
+      });
+
+      fileStream.on('error', (err) => {
+        fileStream.close();
+        try { if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath); } catch {}
+        reject(err);
+      });
+    });
+
+    request.on('error', (err) => {
+      try { if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath); } catch {}
+      reject(err);
+    });
+  });
+}
+
+/**
+ * Garantiza que la estructura de assets e índice 17.json de Minecraft 1.21.1 existan en la instancia.
+ * Previene el fallo crítico de joptsimple.ValueConversionException por directorio de assets inexistente.
+ */
+export async function ensureMinecraftAssets(
+  instanceDir: string,
+  versionId?: string,
+  onLog?: (msg: string) => void
+): Promise<void> {
+  const assetsDir = path.join(instanceDir, 'assets');
+  const indexesDir = path.join(assetsDir, 'indexes');
+  const objectsDir = path.join(assetsDir, 'objects');
+
+  if (!fs.existsSync(indexesDir)) fs.mkdirSync(indexesDir, { recursive: true });
+  if (!fs.existsSync(objectsDir)) fs.mkdirSync(objectsDir, { recursive: true });
+
+  let assetIndexId = '17';
+  let assetIndexUrl = 'https://piston-meta.mojang.com/v1/packages/cad0b8152ca4f766217470e74695403d76592f92/17.json';
+
+  if (versionId) {
+    try {
+      const ver = await Version.parse(instanceDir, versionId);
+      if (ver.assetIndex?.id) {
+        assetIndexId = ver.assetIndex.id;
+      }
+      if (ver.assetIndex?.url) {
+        assetIndexUrl = ver.assetIndex.url;
+      }
+    } catch {}
+  }
+
+  const indexPath = path.join(indexesDir, `${assetIndexId}.json`);
+  if (!fs.existsSync(indexPath)) {
+    if (onLog) onLog(`Descargando índice oficial de assets de Minecraft (${assetIndexId}.json)...`);
+    await downloadFile(assetIndexUrl, indexPath);
+    if (onLog) onLog(`Índice de assets ${assetIndexId}.json instalado correctamente.`);
+  }
+}
+
+/**
+ * Verifica y descarga concurrentemente cualquier librería faltante requerida por la versión de Minecraft / NeoForge.
+ * Esto resuelve el problema de que el instalador de NeoForge solo instala sus propios procesadores y asume
+ * que las librerías vainilla de Mojang ya fueron descargadas previamente por el launcher oficial.
+ */
+export async function ensureMinecraftLibraries(
+  instanceDir: string,
+  versionId: string,
+  onProgress?: (progress: DownloadProgress) => void,
+  onLog?: (msg: string) => void
+): Promise<void> {
+  const log = (m: string) => { if (onLog) onLog(m); };
+
+  log(`Verificando dependencias y librerías de la versión ${versionId}...`);
+  const ver = await Version.parse(instanceDir, versionId);
+
+  interface MissingLib {
+    name: string;
+    path: string;
+    url: string;
+    sha1?: string;
+    dest: string;
+  }
+
+  const missing: MissingLib[] = [];
+
+  for (const lib of ver.libraries) {
+    if (!lib.download || !lib.download.path || !lib.download.url) continue;
+    const dest = path.join(instanceDir, 'libraries', lib.download.path);
+    if (!fs.existsSync(dest)) {
+      missing.push({
+        name: lib.name,
+        path: lib.download.path,
+        url: lib.download.url,
+        sha1: lib.download.sha1,
+        dest
+      });
+    }
+  }
+
+  if (missing.length === 0) {
+    log(`Todas las librerías (${ver.libraries.length}) están verificadas y presentes en disco.`);
+    return;
+  }
+
+  log(`Se detectaron ${missing.length} librerías faltantes. Iniciando descarga paralela...`);
+  if (onProgress) {
+    onProgress({
+      step: 'installing_forge',
+      title: 'Descargando Librerías de Minecraft',
+      detail: `Descargando ${missing.length} dependencias necesarias...`,
+      totalFiles: missing.length,
+      completedFiles: 0,
+      percentage: 50
+    });
+  }
+
+  let completed = 0;
+  let index = 0;
+  const concurrency = 8;
+  const pool: Promise<void>[] = [];
+
+  const worker = async () => {
+    while (index < missing.length) {
+      const item = missing[index++];
+      if (!item) break;
+
+      let success = false;
+      let lastErr: any = null;
+
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          await downloadFile(item.url, item.dest);
+          success = true;
+          break;
+        } catch (err: any) {
+          lastErr = err;
+        }
+      }
+
+      if (!success) {
+        log(`Error descargando librería ${item.name}: ${lastErr?.message}`);
+        throw new Error(`Fallo al descargar librería obligatoria: ${item.name} (${lastErr?.message})`);
+      }
+
+      completed++;
+      if (onProgress) {
+        const pct = 50 + Math.round((completed / missing.length) * 45);
+        onProgress({
+          step: 'installing_forge',
+          title: 'Descargando Librerías de Minecraft',
+          detail: `Librería ${completed}/${missing.length}: ${path.basename(item.path)}`,
+          totalFiles: missing.length,
+          completedFiles: completed,
+          percentage: pct
+        });
+      }
+    }
+  };
+
+  for (let i = 0; i < concurrency; i++) {
+    pool.push(worker());
+  }
+
+  await Promise.all(pool);
+  log(`Todas las librerías (${missing.length}) fueron descargadas y verificadas con éxito.`);
+}
+
+/**
  * Asegura la instalación de NeoForge 21.1.265 y Minecraft 1.21.1 en la carpeta de instancia.
  */
 export async function ensureNeoForgeClient(
@@ -128,10 +363,16 @@ export async function ensureNeoForgeClient(
     fs.mkdirSync(instanceDir, { recursive: true });
   }
 
+  // Garantizar perfil de launcher para que el instalador de NeoForge ejecute sus procesadores
+  ensureLauncherProfilesJson(instanceDir);
+
   // 1. Comprobar si ya existe la versión instalada
   const existingVersion = findInstalledNeoForgeVersion(instanceDir, forgeVersion);
   if (existingVersion) {
     log(`NeoForge ${forgeVersion} ya está instalado en el cliente (Versión: ${existingVersion}).`);
+    // Auto-reparación preventiva: garantizar assets y librerías completas
+    await ensureMinecraftAssets(instanceDir, existingVersion, log);
+    await ensureMinecraftLibraries(instanceDir, existingVersion, onProgress, log);
     return existingVersion;
   }
 
@@ -230,6 +471,11 @@ export async function ensureNeoForgeClient(
     }
 
     log(`NeoForge ${forgeVersion} verificado y registrado: ID "${installed}".`);
+
+    // Garantizar que assets y librerías estén completamente descargados
+    await ensureMinecraftAssets(instanceDir, installed, log);
+    await ensureMinecraftLibraries(instanceDir, installed, onProgress, log);
+
     return installed;
   } catch (err: any) {
     try {
@@ -302,6 +548,9 @@ export async function launchMinecraftClient(options: LaunchOptions): Promise<Chi
     });
   };
 
+  // Pre-verificación preventiva de assets para evitar que ModLauncher aborte por joptsimple
+  await ensureMinecraftAssets(instanceDir, versionId, (m) => emitLog('INFO', 'launcher', m));
+
   emitLog('INFO', 'launcher', `Cargando definición de versión "${versionId}" en ${instanceDir}...`);
 
   const resolvedVersion = await Version.parse(instanceDir, versionId);
@@ -310,6 +559,19 @@ export async function launchMinecraftClient(options: LaunchOptions): Promise<Chi
     'launcher',
     `Versión resuelta: ${resolvedVersion.id} (Minecraft ${resolvedVersion.minecraftVersion}, MainClass: ${resolvedVersion.mainClass})`
   );
+
+  // Auto-descargar client.jar si estuviese ausente
+  if (resolvedVersion.minecraftVersion) {
+    const mcVer = resolvedVersion.minecraftVersion;
+    const clientJarPath = path.join(instanceDir, 'versions', mcVer, `${mcVer}.jar`);
+    if (!fs.existsSync(clientJarPath)) {
+      const clientUrl = (resolvedVersion as any).downloads?.client?.url;
+      if (clientUrl) {
+        emitLog('INFO', 'launcher', `Descargando client.jar de Minecraft ${mcVer}...`);
+        await downloadFile(clientUrl, clientJarPath);
+      }
+    }
+  }
 
   const extraJVMArgs = parseJvmArgs(settings.jvmArgs);
 
