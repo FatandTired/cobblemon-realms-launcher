@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================
+   SISTEMA DE TEMA DINÁMICO (CSS VARIABLES)
+   Cambian en tiempo real con la carta activa
+   ============================================= */
+:root {
+  --theme-primary: #ff4d2e;
+  --theme-secondary: #ff9e1b;
+  --theme-glow: rgba(255, 77, 46, 0.42);
+  --theme-soft: rgba(255, 77, 46, 0.14);
+}
+
+/* Transición suave en elementos que consumen las variables */
+button, [data-theme-reactive] {
+  transition: background-color 600ms ease, box-shadow 600ms ease, color 600ms ease, border-color 600ms ease;
+}
+
 /* Estilos de barras de desplazamiento personalizadas estilo Dark Gaming */
 ::-webkit-scrollbar {
   width: 6px;

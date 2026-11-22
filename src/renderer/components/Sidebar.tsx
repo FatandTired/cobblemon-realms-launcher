@@ -38,10 +38,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={item.id}
               onClick={() => onTabChange(item.id)}
               className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? 'bg-gradient-to-r from-cobble-red to-rose-600 text-white shadow-glow-red'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-canvas-elevated'
+                isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-canvas-elevated'
               }`}
+            style={isActive ? {
+              background: 'linear-gradient(to right, var(--theme-primary), var(--theme-secondary))',
+              boxShadow: '0 0 14px -2px var(--theme-glow)',
+            } : {}}
             >
               <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
               <span>{item.label}</span>

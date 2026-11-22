@@ -7,6 +7,7 @@ import { ConsolePage } from './pages/ConsolePage';
 import { AccountModal } from './components/AccountModal';
 import { Account, DownloadProgress, LauncherSettings, LogEntry, ModpackManifest, ServerStatus } from '../shared/types';
 import { APP_CONFIG } from '../shared/config';
+import { PokemonCard, getRandomCard, applyCardTheme } from '../data/pokemonCards';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
@@ -18,6 +19,15 @@ export const App: React.FC = () => {
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>(APP_CONFIG.MOCK_DATA.initialLogs);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+
+  // ── Pokémon card theme ──
+  const [activeCard, setActiveCard] = useState<PokemonCard>(() => getRandomCard());
+  useEffect(() => { applyCardTheme(activeCard.theme); }, [activeCard]);
+
+  const handleChangeCard = () => {
+    const next = getRandomCard(activeCard.id);
+    setActiveCard(next);
+  };
 
   useEffect(() => {
     if (!window.electronAPI) {
@@ -302,6 +312,9 @@ export const App: React.FC = () => {
               onLaunch={handleLaunch}
               onAbort={handleAbort}
               onSelectAccount={() => setIsAccountModalOpen(true)}
+              isGameRunning={progress?.step === 'running'}
+              activeCard={activeCard}
+              onChangeCard={handleChangeCard}
             />
           )}
 
