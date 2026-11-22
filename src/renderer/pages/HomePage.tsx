@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play,
@@ -52,7 +52,6 @@ export const HomePage: React.FC<HomePageProps> = ({
   activeCard,
   onChangeCard,
 }) => {
-  const [bgImageFailed, setBgImageFailed] = useState<Record<string, boolean>>({});
   const isLaunching = progress && progress.step !== 'idle' && progress.step !== 'error';
   const mcVer = manifest?.minecraftVersion || APP_CONFIG.MINECRAFT.VERSION;
   const loaderVer = manifest?.loader?.version || APP_CONFIG.MINECRAFT.LOADER_VERSION;
@@ -64,99 +63,81 @@ export const HomePage: React.FC<HomePageProps> = ({
     ? cleanMotd(serverStatus.motd)
     : 'Conectando con el servidor Cobblemon Realms...';
 
-  const hasCustomBg =
-    activeCard.backgroundImage && !bgImageFailed[activeCard.id];
-
   return (
     <div className="relative w-full h-full flex flex-col justify-between overflow-hidden select-none bg-[#07090e]">
       {/* ============================================================== */}
-      {/* 2. FONDO DINÁMICO CON CROSSFADE (ANIMATEPRESENCE)              */}
+      {/* 2. FONDO DINÁMICO CON ARTWORK DEL POKÉMON VISIBLE              */}
       {/* ============================================================== */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeCard.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.75, ease: 'easeInOut' }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.02 }}
+            transition={{ duration: 0.6, ease: 'easeInOut' }}
             className="absolute inset-0"
           >
-            {hasCustomBg ? (
+            {/* Gradiente ambiental elemental */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `radial-gradient(ellipse at 50% 45%, ${activeCard.ambientGlow} 0%, rgba(7, 9, 14, 0.85) 60%, #07090e 100%)`,
+              }}
+            />
+
+            {/* ARTWORK OFICIAL DESTACADO EN EL FONDO (NÍTIDO Y VISIBLE) */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
               <img
-                src={activeCard.backgroundImage}
+                src={activeCard.artworkUrl}
                 alt={activeCard.name}
-                className="w-full h-full object-cover opacity-45"
-                onError={() =>
-                  setBgImageFailed((prev) => ({
-                    ...prev,
-                    [activeCard.id]: true,
-                  }))
-                }
+                draggable={false}
+                className="w-[580px] h-[580px] max-w-none object-contain opacity-25 drop-shadow-[0_0_90px_var(--theme-glow)] scale-110 transition-all duration-700"
               />
-            ) : (
-              /* Fallback cinematográfico rico si no hay wallpaper local */
-              <div className="absolute inset-0 overflow-hidden">
-                {/* Gradiente elemental base */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: `radial-gradient(ellipse at 50% 40%, ${activeCard.ambientGlow} 0%, rgba(7, 9, 14, 0.85) 60%, #07090e 100%)`,
-                  }}
-                />
+            </div>
 
-                {/* Artwork oficial grande y desenfocado detrás de la carta */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[720px] flex items-center justify-center opacity-30">
-                  <img
-                    src={activeCard.artworkUrl}
-                    alt={activeCard.name}
-                    className="w-full h-full object-contain blur-3xl scale-125"
-                  />
-                </div>
+            {/* Silueta ambiental secundaria a la derecha */}
+            <div className="absolute -right-16 top-1/2 -translate-y-1/2 w-[500px] h-[500px] pointer-events-none opacity-15 overflow-hidden">
+              <img
+                src={activeCard.artworkUrl}
+                alt={activeCard.name}
+                draggable={false}
+                className="w-full h-full object-contain drop-shadow-2xl"
+              />
+            </div>
 
-                {/* Segundo artwork sutil flotando a la derecha para ambientación */}
-                <div className="absolute -right-20 top-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-20 blur-2xl">
-                  <img
-                    src={activeCard.artworkUrl}
-                    alt={activeCard.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-
-                {/* Acentos ambientales según elemento */}
-                {activeCard.primaryType === 'fire' && (
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute bottom-1/4 left-1/4 w-72 h-72 rounded-full bg-orange-600/15 blur-3xl animate-pulse" />
-                    <div className="absolute top-1/3 right-1/3 w-80 h-80 rounded-full bg-red-600/15 blur-3xl" />
-                  </div>
-                )}
-                {activeCard.primaryType === 'water' && (
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute top-1/4 left-1/3 w-80 h-80 rounded-full bg-cyan-600/15 blur-3xl animate-pulse" />
-                    <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-indigo-600/15 blur-3xl" />
-                  </div>
-                )}
-                {activeCard.primaryType === 'psychic' && (
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute top-1/3 left-1/4 w-80 h-80 rounded-full bg-purple-600/20 blur-3xl animate-pulse" />
-                    <div className="absolute bottom-1/4 right-1/3 w-80 h-80 rounded-full bg-pink-600/15 blur-3xl" />
-                  </div>
-                )}
-                {activeCard.primaryType === 'grass' && (
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute top-1/4 right-1/4 w-80 h-80 rounded-full bg-emerald-600/15 blur-3xl animate-pulse" />
-                    <div className="absolute bottom-1/3 left-1/3 w-80 h-80 rounded-full bg-lime-600/15 blur-3xl" />
-                  </div>
-                )}
+            {/* Acentos de iluminación elemental */}
+            {activeCard.primaryType === 'fire' && (
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute bottom-1/4 left-1/4 w-80 h-80 rounded-full bg-orange-600/15 blur-3xl animate-pulse" />
+                <div className="absolute top-1/3 right-1/4 w-80 h-80 rounded-full bg-red-600/15 blur-3xl" />
+              </div>
+            )}
+            {activeCard.primaryType === 'water' && (
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-1/4 left-1/3 w-80 h-80 rounded-full bg-cyan-600/15 blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-indigo-600/15 blur-3xl" />
+              </div>
+            )}
+            {activeCard.primaryType === 'psychic' && (
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-1/3 left-1/4 w-80 h-80 rounded-full bg-purple-600/20 blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/4 right-1/3 w-80 h-80 rounded-full bg-pink-600/15 blur-3xl" />
+              </div>
+            )}
+            {activeCard.primaryType === 'grass' && (
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-1/4 right-1/4 w-80 h-80 rounded-full bg-emerald-600/15 blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/3 left-1/3 w-80 h-80 rounded-full bg-lime-600/15 blur-3xl" />
               </div>
             )}
 
-            {/* Viñeta radial oscura para contraste óptimo */}
+            {/* Viñeta radial oscura para garantizar legibilidad */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
                 background:
-                  'radial-gradient(ellipse at center, transparent 35%, rgba(7, 9, 14, 0.75) 75%, #07090e 100%)',
+                  'radial-gradient(ellipse at center, transparent 30%, rgba(7, 9, 14, 0.72) 70%, #07090e 100%)',
               }}
             />
           </motion.div>

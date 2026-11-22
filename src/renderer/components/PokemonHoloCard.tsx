@@ -11,16 +11,13 @@ import { EnergyIcon } from './EnergyIcon';
 interface PokemonHoloCardProps {
   card: PokemonCard;
   isGameRunning?: boolean;
-  onFlip?: () => void;
 }
 
 export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
   card,
   isGameRunning = false,
-  onFlip,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isFlipped, setIsFlipped] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   // Motion values para tilt 3D (grados)
@@ -31,21 +28,19 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
   const rotateX = useSpring(rawY, { stiffness: 280, damping: 24 });
   const rotateY = useSpring(rawX, { stiffness: 280, damping: 24 });
 
-  // CSS variables para los shaders holográficos
-  const pointerX = useTransform(rawX, [-16, 16], ['10%', '90%']);
-  const pointerY = useTransform(rawY, [-16, 16], ['90%', '10%']);
-  const bgX = useTransform(rawX, [-16, 16], ['0%', '100%']);
-  const bgY = useTransform(rawY, [-16, 16], ['0%', '100%']);
+  // CSS variables para los shaders holográficos y reflejo especular
+  const pointerX = useTransform(rawX, [-16, 16], ['15%', '85%']);
+  const pointerY = useTransform(rawY, [-16, 16], ['85%', '15%']);
   const glareOpacity = useTransform(rawX, (val) =>
-    isHovered && !isGameRunning ? Math.min(0.85, 0.35 + Math.abs(val) / 24) : 0.2
+    isHovered && !isGameRunning ? Math.min(0.75, 0.35 + Math.abs(val) / 20) : 0.2
   );
 
   // Sombra 3D dinámica proyectada por el Pokémon
-  const shadowX = useTransform(rawX, [-16, 16], [14, -14]);
-  const shadowY = useTransform(rawY, [-16, 16], [-14, 14]);
+  const shadowX = useTransform(rawX, [-16, 16], [12, -12]);
+  const shadowY = useTransform(rawY, [-16, 16], [-12, 12]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isGameRunning || isFlipped) return;
+    if (isGameRunning) return;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     const cx = rect.left + rect.width / 2;
@@ -66,23 +61,16 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
     rawY.set(0);
   };
 
-  const handleClick = () => {
-    setIsFlipped((f) => !f);
-    onFlip?.();
-  };
-
   // Marco metálico según rareza
   const isGoldBorder = card.rarity === 'hyper-rare';
   const metallicBorder = isGoldBorder
     ? 'linear-gradient(135deg, #fef08a 0%, #ca8a04 22%, #fef9c3 45%, #854d0e 70%, #eab308 88%, #fef08a 100%)'
     : 'linear-gradient(135deg, #ffffff 0%, #94a3b8 20%, #f1f5f9 45%, #475569 70%, #cbd5e1 88%, #ffffff 100%)';
 
-  const flipRotateY = isFlipped ? 180 : 0;
-
   return (
     <div
       ref={containerRef}
-      className="relative select-none flex-shrink-0 cursor-pointer"
+      className="relative select-none flex-shrink-0"
       style={{
         perspective: '1300px',
         height: 'clamp(430px, 63vh, 495px)',
@@ -91,19 +79,15 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      title="Haz clic para voltear la carta"
     >
       <motion.div
         className="w-full h-full relative"
         style={{
           transformStyle: 'preserve-3d',
-          rotateX: isFlipped ? 0 : rotateX,
-          rotateY: isFlipped ? flipRotateY : rotateY,
+          rotateX,
+          rotateY,
           borderRadius: 20,
         }}
-        animate={{ rotateY: flipRotateY }}
-        transition={{ type: 'spring', stiffness: 180, damping: 24 }}
       >
         {/* ============================================================== */}
         {/* CARA FRONTAL FULL ART / EX                                     */}
@@ -111,7 +95,6 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
         <div
           className="absolute inset-0 rounded-[20px] overflow-hidden"
           style={{
-            backfaceVisibility: 'hidden',
             background: '#0a0d16',
             boxShadow: `0 0 65px -10px ${card.theme.glow}, 0 28px 50px -15px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(255,255,255,0.15)`,
           }}
@@ -158,7 +141,7 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
 
             {/* Aura elemental central detrás del Pokémon */}
             <div
-              className="absolute top-[22%] left-1/2 -translate-x-1/2 w-[90%] h-[55%] rounded-full blur-2xl opacity-60 pointer-events-none"
+              className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[90%] h-[50%] rounded-full blur-2xl opacity-60 pointer-events-none"
               style={{
                 background: `radial-gradient(circle, ${card.theme.primary} 0%, ${card.theme.secondary} 40%, transparent 75%)`,
               }}
@@ -166,20 +149,20 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
           </div>
 
           {/* ============================================================== */}
-          {/* POKÉMON EN CAPA 3D (translateZ 55px) — ESCALADO & DESTACADO     */}
+          {/* POKÉMON EN CAPA 3D (translateZ 50px) — PERFECTAMENTE CENTRADO   */}
           {/* ============================================================== */}
           <motion.div
-            className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[92%] h-[58%] z-10 pointer-events-none flex items-center justify-center"
+            className="absolute top-[44px] bottom-[195px] left-2 right-2 z-10 pointer-events-none flex items-center justify-center overflow-visible"
             style={{
-              transform: 'translateZ(55px)',
-              filter: `drop-shadow(${shadowX.get()}px ${shadowY.get()}px 20px rgba(0,0,0,0.85)) drop-shadow(0 0 16px ${card.theme.glow})`,
+              transform: 'translateZ(50px)',
+              filter: `drop-shadow(${shadowX.get()}px ${shadowY.get()}px 16px rgba(0,0,0,0.85)) drop-shadow(0 0 14px ${card.theme.glow})`,
             }}
           >
             <img
               src={card.artworkUrl}
               alt={card.name}
               draggable={false}
-              className="w-full h-full object-contain scale-[1.22] transition-transform duration-200"
+              className="max-w-[95%] max-h-[95%] w-auto h-auto object-contain transition-transform duration-200 drop-shadow-md"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.opacity = '0.3';
               }}
@@ -187,77 +170,66 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
           </motion.div>
 
           {/* ============================================================== */}
-          {/* SHADERS HOLOGRÁFICOS SEGÚN RAREZA                              */}
+          {/* SHADERS HOLOGRÁFICOS (SIEMPRE ACTIVOS, NO SE PAUSAN EN HOVER)  */}
           {/* ============================================================== */}
 
           {/* CAPA 1: TEXTURA GRABADA (ETCHED FOIL) */}
-          <motion.div
-            className="absolute inset-0 z-20 pointer-events-none"
+          <div
+            className="absolute inset-0 z-20 pointer-events-none transition-opacity duration-300"
             style={{
-              opacity: isHovered && !isGameRunning ? 0.35 : 0.15,
+              opacity: isHovered ? 0.35 : 0.2,
               backgroundImage:
                 'repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 1px, transparent 1px, transparent 4px), repeating-linear-gradient(-45deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 1px, transparent 1px, transparent 4px)',
               mixBlendMode: 'overlay',
             }}
           />
 
-          {/* CAPA 2: HOLOGRAMA DIRECCIONAL SEGÚN RAREZA */}
+          {/* CAPA 2: HOLOGRAMA DIRECCIONAL CONTINUO SEGÚN RAREZA */}
           {card.rarity === 'special-illustration-rare' && (
-            <motion.div
-              className={`absolute inset-0 z-21 pointer-events-none ${
-                !isHovered && !isGameRunning ? 'animate-holo-idle' : ''
-              }`}
+            <div
+              className="absolute inset-0 z-21 pointer-events-none animate-holo-continuous"
               style={{
-                opacity: isHovered && !isGameRunning ? 0.45 : 0.22,
+                opacity: isHovered ? 0.45 : 0.3,
                 backgroundImage:
                   'linear-gradient(115deg, #ff0080 0%, #ff8c00 18%, #40e0d0 36%, #7c3aed 54%, #00f5a0 72%, #ff0080 100%)',
-                backgroundSize: '300% 300%',
-                backgroundPosition: isHovered
-                  ? `${bgX.get()} ${bgY.get()}`
-                  : '50% 50%',
+                backgroundSize: '260% 260%',
                 mixBlendMode: 'color-dodge',
               }}
             />
           )}
 
           {card.rarity === 'hyper-rare' && (
-            <motion.div
-              className={`absolute inset-0 z-21 pointer-events-none ${
-                !isHovered && !isGameRunning ? 'animate-holo-idle' : ''
-              }`}
+            <div
+              className="absolute inset-0 z-21 pointer-events-none animate-holo-continuous"
               style={{
-                opacity: isHovered && !isGameRunning ? 0.5 : 0.25,
+                opacity: isHovered ? 0.52 : 0.32,
                 backgroundImage:
-                  'radial-gradient(circle at var(--px, 50%) var(--py, 50%), #fef08a 0%, #eab308 25%, #a855f7 50%, #ffffff 75%, transparent 100%)',
-                backgroundSize: '250% 250%',
-                backgroundPosition: `${bgX.get()} ${bgY.get()}`,
+                  'radial-gradient(circle, #fef08a 0%, #eab308 25%, #a855f7 50%, #ffffff 75%, transparent 100%)',
+                backgroundSize: '240% 240%',
                 mixBlendMode: 'color-dodge',
               }}
             />
           )}
 
           {card.rarity === 'illustration-rare' && (
-            <motion.div
-              className={`absolute inset-0 z-21 pointer-events-none ${
-                !isHovered && !isGameRunning ? 'animate-holo-idle' : ''
-              }`}
+            <div
+              className="absolute inset-0 z-21 pointer-events-none animate-holo-continuous"
               style={{
-                opacity: isHovered && !isGameRunning ? 0.35 : 0.18,
+                opacity: isHovered ? 0.4 : 0.24,
                 backgroundImage:
-                  'linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(34,197,94,0.2) 30%, rgba(132,204,22,0.2) 60%, rgba(255,255,255,0.2) 100%)',
-                backgroundSize: '200% 200%',
-                backgroundPosition: `${bgX.get()} ${bgY.get()}`,
+                  'linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(34,197,94,0.3) 30%, rgba(132,204,22,0.3) 60%, rgba(255,255,255,0.3) 100%)',
+                backgroundSize: '220% 220%',
                 mixBlendMode: 'soft-light',
               }}
             />
           )}
 
-          {/* CAPA 3: BRILLO ESPECULAR (GLARE SPOTLIGHT) */}
+          {/* CAPA 3: BRILLO ESPECULAR (GLARE SPOTLIGHT DINÁMICO) */}
           <motion.div
             className="absolute inset-0 z-22 pointer-events-none transition-opacity duration-300"
             style={{
               opacity: glareOpacity,
-              background: `radial-gradient(circle at ${pointerX.get()} ${pointerY.get()}, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.12) 30%, transparent 65%)`,
+              background: `radial-gradient(circle at ${pointerX.get()} ${pointerY.get()}, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.12) 30%, transparent 65%)`,
               mixBlendMode: 'screen',
             }}
           />
@@ -267,7 +239,7 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
           {/* ============================================================== */}
           <div className="relative z-25 h-full flex flex-col justify-between p-3.5 pt-3">
             {/* CABECERA: ETAPA, NOMBRE, LOGO EX, PS Y ENERGÍA */}
-            <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center justify-between gap-1.5 h-[36px]">
               <div className="flex items-center gap-2 min-w-0">
                 {/* Insignia de etapa */}
                 <span
@@ -324,13 +296,13 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
               </div>
             </div>
 
-            {/* ZONA MEDIA-INFERIOR: HABILIDAD Y ATAQUE CON GLASSMORPHISM */}
-            <div className="mt-auto mb-2 space-y-2">
+            {/* ZONA INFERIOR: HABILIDAD Y ATAQUE CON GLASSMORPHISM */}
+            <div className="mt-auto mb-1 space-y-2">
               <div
                 className="rounded-xl p-2.5 border backdrop-blur-md shadow-2xl space-y-2"
                 style={{
-                  background: 'rgba(5, 7, 13, 0.68)',
-                  borderColor: 'rgba(255, 255, 255, 0.12)',
+                  background: 'rgba(5, 7, 13, 0.72)',
+                  borderColor: 'rgba(255, 255, 255, 0.14)',
                 }}
               >
                 {/* HABILIDAD */}
@@ -457,64 +429,6 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
                   COBBLEMON REALMS • 1.21.1
                 </span>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ============================================================== */}
-        {/* CARA TRASERA (REVERSO) 180°                                    */}
-        {/* ============================================================== */}
-        <div
-          className="absolute inset-0 rounded-[20px] overflow-hidden"
-          style={{
-            backfaceVisibility: 'hidden',
-            transform: 'rotateY(180deg)',
-            background: 'linear-gradient(145deg, #070913 0%, #111827 100%)',
-            boxShadow: '0 24px 48px -12px rgba(0,0,0,0.9)',
-            border: '2px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          {/* Borde interior brillante */}
-          <div
-            className="absolute inset-[6px] rounded-[15px] pointer-events-none border"
-            style={{
-              borderColor: `${card.theme.primary}50`,
-              boxShadow: `inset 0 0 25px ${card.theme.glow}`,
-            }}
-          />
-
-          <div className="h-full flex flex-col items-center justify-center gap-4 p-6 text-center">
-            {/* Pokébola mística central */}
-            <div
-              className="w-24 h-24 rounded-full flex items-center justify-center relative shadow-2xl"
-              style={{
-                background: `radial-gradient(circle, ${card.theme.soft} 0%, rgba(0,0,0,0.6) 80%)`,
-                border: `3px solid ${card.theme.primary}80`,
-                boxShadow: `0 0 50px ${card.theme.glow}`,
-              }}
-            >
-              <div className="w-16 h-16 rounded-full border-2 border-white/20 flex items-center justify-center">
-                <div
-                  className="w-8 h-8 rounded-full border-2 border-white shadow-lg"
-                  style={{ background: card.theme.primary }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="text-base font-black tracking-wider text-white">
-                COBBLEMON REALMS
-              </div>
-              <div
-                className="text-[10px] font-bold tracking-widest uppercase mt-1"
-                style={{ color: card.theme.primary }}
-              >
-                Edición Oficial Multijugador
-              </div>
-            </div>
-
-            <div className="text-[9px] text-slate-400 font-mono tracking-wider mt-2">
-              Haz clic para voltear la carta
             </div>
           </div>
         </div>
