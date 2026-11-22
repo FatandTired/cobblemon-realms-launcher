@@ -12,7 +12,8 @@ import { fetchRemoteManifest, syncModpackFromVps } from './services/modpackServi
 import {
   loginMicrosoftAccount,
   refreshMicrosoftAccountIfNeeded,
-  createOfflineAccount
+  createOfflineAccount,
+  clearMicrosoftSession
 } from './services/authService';
 import { ensureNeoForgeClient, launchMinecraftClient } from './services/launcherService';
 import {
@@ -176,7 +177,15 @@ function setupIpcHandlers() {
   ipcMain.handle('accounts:getActiveId', () => store.getActiveAccountId());
   ipcMain.handle('accounts:setActive', (_event, id: string) => store.setActiveAccount(id));
   ipcMain.handle('accounts:save', (_event, account: Account) => store.saveAccount(account));
-  ipcMain.handle('accounts:delete', (_event, id: string) => store.deleteAccount(id));
+  ipcMain.handle('accounts:delete', async (_event, id: string) => {
+    const accounts = store.getAccounts();
+    const target = accounts.find((a) => a.id === id);
+    if (target?.type === 'microsoft') {
+      await clearMicrosoftSession();
+      sendLog('INFO', 'launcher', 'Sesión de Microsoft cerrada y caché de autenticación (ms-auth) eliminada.');
+    }
+    return store.deleteAccount(id);
+  });
 
   // Autenticación No-Premium (Offline) con UUID v3 estándar
   ipcMain.handle('auth:loginOffline', (_event, username: string) => {

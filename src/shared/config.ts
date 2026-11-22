@@ -58,11 +58,11 @@ export const APP_CONFIG = {
     PORT: 25565,
   },
 
-  // Autenticación Premium Microsoft OAuth2
+  // Autenticación Premium Microsoft OAuth2 (login.live.com)
   AUTH: {
-    AZURE_CLIENT_ID: '00000000-0000-0000-0000-000000000000',
-    REDIRECT_URI: 'http://localhost:50005/callback',
-    SCOPE: 'XboxLive.signin offline_access',
+    CLIENT_ID: '00000000402b5328',
+    REDIRECT_URI: 'https://login.live.com/oauth20_desktop.srf',
+    SCOPE: 'service::user.auth.xboxlive.com::MBI_SSL',
   },
 
   // Descarga oficial de Java 21 Temurin (Adoptium API)

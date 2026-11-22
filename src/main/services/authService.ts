@@ -1,21 +1,13 @@
-import { BrowserWindow, safeStorage } from 'electron';
+import { BrowserWindow, safeStorage, session } from 'electron';
 import https from 'https';
 import crypto from 'crypto';
 import { Account } from '../../shared/types';
 import { APP_CONFIG } from '../../shared/config';
 
-// Client ID público oficial de Minecraft Launcher para Xbox Live OAuth2
-const OFFICIAL_MC_CLIENT_ID = '00000000402b5328';
-const MS_REDIRECT_URI = 'https://login.live.com/oauth20_desktop.srf';
-const MS_SCOPE = 'service::user.auth.xboxlive.com::MBI_SSL';
-
-function getActiveClientId(): string {
-  const configured = APP_CONFIG.AUTH.AZURE_CLIENT_ID;
-  if (!configured || configured === '00000000-0000-0000-0000-000000000000') {
-    return OFFICIAL_MC_CLIENT_ID;
-  }
-  return configured;
-}
+// Client ID público oficial del launcher de Minecraft para OAuth2 en login.live.com
+export const MS_CLIENT_ID = '00000000402b5328';
+export const MS_REDIRECT_URI = 'https://login.live.com/oauth20_desktop.srf';
+export const MS_SCOPE = 'service::user.auth.xboxlive.com::MBI_SSL';
 
 /**
  * Cifra un texto sensible con safeStorage de Electron si está disponible.
@@ -50,6 +42,21 @@ export function decryptSensitiveToken(storedText: string): string {
   return storedText;
 }
 
+/**
+ * Limpia los datos y cookies de la partición dedicada 'ms-auth' al cerrar sesión.
+ */
+export async function clearMicrosoftSession(): Promise<void> {
+  try {
+    const ses = session.fromPartition('ms-auth');
+    await ses.clearStorageData();
+  } catch (err) {
+    console.warn('Error al limpiar datos de sesión ms-auth:', err);
+  }
+}
+
+/**
+ * Realiza una petición POST enviando datos JSON o FormUrlEncoded por HTTPS.
+ */
 function httpsPostJson<T = any>(
   hostname: string,
   path: string,
@@ -84,11 +91,23 @@ function httpsPostJson<T = any>(
           try {
             if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
               let errorDetail = `HTTP ${res.statusCode}`;
+              let xerrCode: number | string | null = null;
               try {
                 const parsed = JSON.parse(body);
-                errorDetail = parsed.errorMessage || parsed.error || parsed.error_description || body;
-              } catch {}
-              return reject(new Error(errorDetail));
+                if (parsed.XErr) {
+                  xerrCode = parsed.XErr;
+                  errorDetail = `XErr: ${parsed.XErr} - ${parsed.Message || ''}`;
+                } else {
+                  errorDetail = parsed.errorMessage || parsed.error_description || parsed.error || body;
+                }
+              } catch {
+                if (body) errorDetail += `: ${body}`;
+              }
+              const err = new Error(errorDetail);
+              (err as any).statusCode = res.statusCode;
+              (err as any).xerr = xerrCode;
+              (err as any).responseBody = body;
+              return reject(err);
             }
             const parsed = JSON.parse(body);
             resolve(parsed);
@@ -105,6 +124,9 @@ function httpsPostJson<T = any>(
   });
 }
 
+/**
+ * Realiza una petición GET por HTTPS y parsea la respuesta JSON.
+ */
 function httpsGetJson<T = any>(hostname: string, path: string, headers: Record<string, string> = {}): Promise<T> {
   return new Promise((resolve, reject) => {
     const req = https.request(
@@ -130,8 +152,13 @@ function httpsGetJson<T = any>(hostname: string, path: string, headers: Record<s
               try {
                 const parsed = JSON.parse(body);
                 errorDetail = parsed.errorMessage || parsed.error || body;
-              } catch {}
-              return reject(new Error(errorDetail));
+              } catch {
+                if (body) errorDetail += `: ${body}`;
+              }
+              const err = new Error(errorDetail);
+              (err as any).statusCode = res.statusCode;
+              (err as any).responseBody = body;
+              return reject(err);
             }
             const parsed = JSON.parse(body);
             resolve(parsed);
@@ -148,59 +175,66 @@ function httpsGetJson<T = any>(hostname: string, path: string, headers: Record<s
 }
 
 /**
- * Abre ventana modal de Electron para capturar el código OAuth2 de Microsoft.
+ * Abre ventana modal limpia de Electron en partición 'ms-auth' para capturar el código OAuth2 de login.live.com.
  */
 function acquireAuthorizationCode(parentWindow?: BrowserWindow | null): Promise<string> {
   return new Promise((resolve, reject) => {
-    const clientId = getActiveClientId();
     const authWindow = new BrowserWindow({
-      width: 520,
+      width: 500,
       height: 680,
       parent: parentWindow || undefined,
       modal: !!parentWindow,
       show: false,
-      title: 'Iniciar Sesión en Microsoft (Minecraft)',
+      title: 'Iniciar Sesión con Microsoft',
       backgroundColor: '#0b0f19',
       autoHideMenuBar: true,
       webPreferences: {
         nodeIntegration: false,
-        contextIsolation: true
+        contextIsolation: true,
+        partition: 'ms-auth'
       }
     });
 
-    const authUrl = `https://login.live.com/oauth20_authorize.srf?client_id=${clientId}&response_type=code&scope=${encodeURIComponent(
-      MS_SCOPE
-    )}&redirect_uri=${encodeURIComponent(MS_REDIRECT_URI)}&prompt=select_account`;
+    const authUrl = `https://login.live.com/oauth20_authorize.srf?client_id=${MS_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(
+      MS_REDIRECT_URI
+    )}&scope=${encodeURIComponent(MS_SCOPE)}&prompt=select_account`;
 
     let finished = false;
 
     const checkRedirect = (url: string) => {
+      if (finished) return;
       if (url.startsWith(MS_REDIRECT_URI)) {
+        finished = true;
         try {
           const parsed = new URL(url);
           const code = parsed.searchParams.get('code');
           const error = parsed.searchParams.get('error');
-          const desc = parsed.searchParams.get('error_description');
+          const errorDesc = parsed.searchParams.get('error_description');
 
-          finished = true;
           authWindow.destroy();
 
           if (code) {
             resolve(code);
           } else {
-            reject(new Error(desc || error || 'Autorización cancelada o fallida'));
+            reject(new Error(errorDesc || error || 'Autorización cancelada o denegada por Microsoft.'));
           }
-        } catch (err) {
-          finished = true;
+        } catch (err: any) {
           authWindow.destroy();
-          reject(err);
+          reject(new Error(`Error analizando redirección de autenticación: ${err.message}`));
         }
       }
     };
 
     authWindow.webContents.on('will-redirect', (_e, url) => checkRedirect(url));
     authWindow.webContents.on('will-navigate', (_e, url) => checkRedirect(url));
-    authWindow.once('ready-to-show', () => authWindow.show());
+    authWindow.webContents.on('did-navigate', (_e, url) => checkRedirect(url));
+
+    authWindow.once('ready-to-show', () => {
+      if (!authWindow.isDestroyed()) {
+        authWindow.show();
+      }
+    });
+
     authWindow.on('closed', () => {
       if (!finished) {
         finished = true;
@@ -208,7 +242,12 @@ function acquireAuthorizationCode(parentWindow?: BrowserWindow | null): Promise<
       }
     });
 
-    authWindow.loadURL(authUrl);
+    authWindow.loadURL(authUrl).catch((err) => {
+      if (!finished) {
+        finished = true;
+        reject(new Error(`No se pudo cargar la ventana de autenticación de Microsoft: ${err.message}`));
+      }
+    });
   });
 }
 
@@ -219,12 +258,15 @@ async function authenticateXboxAndMinecraft(
   msAccessToken: string,
   log: (m: string) => void
 ): Promise<{ minecraftToken: string; expiresAt: number }> {
-  log('Autenticando con Xbox Live (XBL)...');
+  log('Autenticando con Xbox Live (user.auth.xboxlive.com)...');
+
+  // REGLA CRÍTICA DE LOGIN.LIVE.COM:
+  // Con el scope MBI_SSL de login.live.com, RpsTicket se envía como el access_token DIRECTO SIN el prefijo "d=".
   const xbl = await httpsPostJson('user.auth.xboxlive.com', '/user/authenticate', {
     Properties: {
       AuthMethod: 'RPS',
       SiteName: 'user.auth.xboxlive.com',
-      RpsTicket: `d=${msAccessToken}`
+      RpsTicket: msAccessToken
     },
     RelyingParty: 'http://auth.xboxlive.com',
     TokenType: 'JWT'
@@ -236,7 +278,7 @@ async function authenticateXboxAndMinecraft(
     throw new Error('No se recibió Token o UHS válido de Xbox Live.');
   }
 
-  log('Solicitando token de autorización XSTS para Minecraft...');
+  log('Solicitando token de autorización XSTS para Minecraft Services...');
   let xsts: any;
   try {
     xsts = await httpsPostJson('xsts.auth.xboxlive.com', '/xsts/authorize', {
@@ -248,13 +290,15 @@ async function authenticateXboxAndMinecraft(
       TokenType: 'JWT'
     });
   } catch (err: any) {
-    const msg = err.message || '';
-    if (msg.includes('2148916238')) {
+    const msg = String(err.message || err.responseBody || '');
+    if (msg.includes('2148916238') || err.xerr === 2148916238) {
       throw new Error(
-        'La cuenta de Microsoft es menor de edad y debe ser agregada a una Familia de Microsoft por un adulto para poder jugar en línea.'
+        'La cuenta de Microsoft pertenece a un menor de edad y debe ser agregada a una Familia de Microsoft por un adulto para autorizar el juego en línea.'
       );
-    } else if (msg.includes('2148916233')) {
-      throw new Error('La cuenta no tiene un perfil de Xbox creado. Entra a xbox.com para activarlo.');
+    } else if (msg.includes('2148916233') || err.xerr === 2148916233) {
+      throw new Error('La cuenta de Microsoft no tiene un perfil de Xbox creado. Ingresa a https://www.xbox.com para configurarlo.');
+    } else if (msg.includes('2148916235') || err.xerr === 2148916235) {
+      throw new Error('Xbox Live no se encuentra disponible en tu país o región actual.');
     }
     throw err;
   }
@@ -264,7 +308,7 @@ async function authenticateXboxAndMinecraft(
     throw new Error('No se recibió Token XSTS válido.');
   }
 
-  log('Iniciando sesión en los servicios de Minecraft...');
+  log('Iniciando sesión en los servicios oficiales de Minecraft (login_with_xbox)...');
   const mcLogin = await httpsPostJson('api.minecraftservices.com', '/authentication/login_with_xbox', {
     identityToken: `XBL3.0 x=${uhs};${xstsToken}`
   });
@@ -283,32 +327,7 @@ async function authenticateXboxAndMinecraft(
 }
 
 /**
- * Valida la posesión de la licencia de Minecraft Java Edition.
- */
-async function verifyMinecraftEntitlements(mcAccessToken: string, log: (m: string) => void): Promise<boolean> {
-  log('Verificando licencia de Minecraft Java Edition...');
-  try {
-    const entitlements = await httpsGetJson('api.minecraftservices.com', '/entitlements/mcstore', {
-      Authorization: `Bearer ${mcAccessToken}`
-    });
-
-    const items = entitlements.items || [];
-    const ownsJava = items.some(
-      (item: any) =>
-        item.name === 'product_minecraft' ||
-        item.name === 'game_minecraft' ||
-        item.name === 'game_minecraft_bedrock'
-    );
-    return ownsJava;
-  } catch (err) {
-    console.warn('Aviso al verificar entitlements en mcstore:', err);
-    // Continuamos a verificar profile que es la fuente definitiva de existencia de personaje
-    return true;
-  }
-}
-
-/**
- * Inicia el flujo real de autenticación Microsoft para Minecraft.
+ * Inicia el flujo real de autenticación Microsoft usando el flujo heredado de login.live.com.
  */
 export async function loginMicrosoftAccount(
   parentWindow?: BrowserWindow | null,
@@ -318,20 +337,19 @@ export async function loginMicrosoftAccount(
     if (onLog) onLog(m);
   };
 
-  const clientId = getActiveClientId();
-  log(`Iniciando flujo Microsoft OAuth2 (Client ID: ${clientId.substring(0, 8)}...)...`);
-
+  log('Abriendo ventana modal de inicio de sesión de Microsoft (login.live.com)...');
   const code = await acquireAuthorizationCode(parentWindow);
 
-  log('Canjeando código por tokens OAuth2 en login.live.com...');
+  log('Intercambiando código por tokens en login.live.com/oauth20_token.srf...');
   const tokenData = await httpsPostJson(
     'login.live.com',
     '/oauth20_token.srf',
     {
-      client_id: clientId,
+      client_id: MS_CLIENT_ID,
       code,
       grant_type: 'authorization_code',
-      redirect_uri: MS_REDIRECT_URI
+      redirect_uri: MS_REDIRECT_URI,
+      scope: MS_SCOPE
     },
     true
   );
@@ -339,23 +357,24 @@ export async function loginMicrosoftAccount(
   const msAccessToken = tokenData.access_token;
   const msRefreshToken = tokenData.refresh_token;
 
-  // Intercambio Xbox Live -> XSTS -> Minecraft
+  if (!msAccessToken) {
+    throw new Error('No se recibió access_token de Microsoft.');
+  }
+
+  // Cadena Xbox Live -> XSTS -> Minecraft Services
   const { minecraftToken, expiresAt } = await authenticateXboxAndMinecraft(msAccessToken, log);
 
-  // Validación de Licencia
-  await verifyMinecraftEntitlements(minecraftToken, log);
-
-  // Consulta de perfil oficial
-  log('Obteniendo perfil de Minecraft oficial (nombre y UUID)...');
+  // Consulta de perfil oficial y validación de licencia
+  log('Validando perfil oficial y licencia de Minecraft Java Edition...');
   let profile: any;
   try {
     profile = await httpsGetJson('api.minecraftservices.com', '/minecraft/profile', {
       Authorization: `Bearer ${minecraftToken}`
     });
   } catch (err: any) {
-    if (err.message?.includes('404') || err.message?.includes('NOT_FOUND')) {
+    if (err.statusCode === 404 || err.message?.includes('404') || err.message?.includes('NOT_FOUND')) {
       throw new Error(
-        'Esta cuenta de Microsoft no posee una copia comprada de Minecraft Java Edition ni un gamertag registrado.'
+        'Esta cuenta de Microsoft no posee una licencia activa de Minecraft Java Edition (o aún no ha creado su perfil de jugador).'
       );
     }
     throw err;
@@ -379,12 +398,12 @@ export async function loginMicrosoftAccount(
     addedAt: Date.now()
   };
 
-  log(`¡Cuenta Microsoft validada con éxito! Jugador: ${profile.name} [UUID: ${formattedUuid}]`);
+  log(`¡Cuenta Microsoft autenticada exitosamente! Usuario: ${profile.name} [UUID: ${formattedUuid}]`);
   return account;
 }
 
 /**
- * Renueva el token de una cuenta Microsoft si está expirado o próximo a expirar.
+ * Renueva el token de una cuenta Microsoft usando login.live.com si está expirado o próximo a expirar.
  */
 export async function refreshMicrosoftAccountIfNeeded(
   account: Account,
@@ -406,17 +425,17 @@ export async function refreshMicrosoftAccountIfNeeded(
 
   log(`Renovando sesión Microsoft para el usuario ${account.username}...`);
   const rawRefreshToken = decryptSensitiveToken(account.refreshToken);
-  const clientId = getActiveClientId();
 
   try {
     const tokenData = await httpsPostJson(
       'login.live.com',
       '/oauth20_token.srf',
       {
-        client_id: clientId,
+        client_id: MS_CLIENT_ID,
         refresh_token: rawRefreshToken,
         grant_type: 'refresh_token',
-        redirect_uri: MS_REDIRECT_URI
+        redirect_uri: MS_REDIRECT_URI,
+        scope: MS_SCOPE
       },
       true
     );

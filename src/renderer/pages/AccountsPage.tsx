@@ -12,7 +12,6 @@ import {
   KeyRound
 } from 'lucide-react';
 import { Account, AccountType } from '../../shared/types';
-import { APP_CONFIG } from '../../shared/config';
 
 interface AccountsPageProps {
   accounts: Account[];
@@ -186,11 +185,8 @@ export const AccountsPage: React.FC<AccountsPageProps> = ({
                   <span>Autenticación Oficial de Microsoft</span>
                 </div>
                 <p className="text-slate-400 leading-relaxed text-[11px]">
-                  Inicia sesión de forma segura a través de los servidores de Microsoft / Xbox Live para usar tu cuenta Premium con tu skin y capa oficial.
+                  Inicia sesión de forma segura a través de los servidores oficiales de Microsoft / Xbox Live para usar tu cuenta Premium con tu skin y capa oficial.
                 </p>
-                <div className="text-[10px] text-slate-500 bg-canvas-card p-2 rounded border border-canvas-border font-mono">
-                  AZURE_CLIENT_ID: {APP_CONFIG.AUTH.AZURE_CLIENT_ID.substring(0, 8)}... (Configurable)
-                </div>
               </div>
 
               <button
