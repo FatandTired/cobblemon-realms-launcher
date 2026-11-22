@@ -5,15 +5,58 @@ export interface PokemonCardTheme {
   soft: string;
 }
 
+export type EnergyType =
+  | 'fire'
+  | 'water'
+  | 'psychic'
+  | 'grass'
+  | 'darkness'
+  | 'lightning'
+  | 'fighting'
+  | 'colorless';
+
+export type PokemonCardRarity =
+  | 'special-illustration-rare'
+  | 'hyper-rare'
+  | 'illustration-rare';
+
+export interface PokemonAbility {
+  name: string;
+  description: string;
+}
+
+export interface PokemonAttack {
+  name: string;
+  damage: string;
+  energyCost: EnergyType[];
+  description: string;
+}
+
 export interface PokemonCard {
   id: string;
   number: string;
   name: string;
   artworkUrl: string;
+  backgroundImage?: string;
   types: string[];
-  rarity: string;
+  primaryType: EnergyType;
+  stage: 'BÁSICO' | 'FASE 1' | 'FASE 2';
+  isEx: boolean;
+  hp: number;
+  isTeracristal?: boolean;
+  rarity: PokemonCardRarity;
+  rarityLabel: string;
+  rarityStars: string;
   theme: PokemonCardTheme;
   typeGradient: string;
+  ambientGlow: string;
+  ability: PokemonAbility;
+  attack: PokemonAttack;
+  weakness: { type: EnergyType; value: string };
+  resistance?: { type: EnergyType; value: string };
+  retreatCost: number;
+  collectionCode: string;
+  collectorSet: string;
 }
 
 export const POKEMON_CARDS: PokemonCard[] = [
@@ -22,60 +65,156 @@ export const POKEMON_CARDS: PokemonCard[] = [
     number: '#006',
     name: 'Charizard',
     artworkUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png',
+    backgroundImage: '/backgrounds/charizard.jpg',
     types: ['FUEGO', 'VOLADOR'],
-    rarity: 'SPECIAL ILLUSTRATION RARE',
+    primaryType: 'fire',
+    stage: 'FASE 2',
+    isEx: true,
+    hp: 330,
+    isTeracristal: true,
+    rarity: 'special-illustration-rare',
+    rarityLabel: 'SPECIAL ILLUSTRATION RARE',
+    rarityStars: '★★',
     theme: {
       primary: '#ff4d2e',
       secondary: '#ff9e1b',
       glow: 'rgba(255, 77, 46, 0.42)',
       soft: 'rgba(255, 77, 46, 0.14)',
     },
-    typeGradient: 'linear-gradient(145deg, #1a0800 0%, #2d1200 50%, #1a0400 100%)',
+    typeGradient: 'linear-gradient(145deg, #2b0800 0%, #4a1503 40%, #1f0400 100%)',
+    ambientGlow: 'rgba(255, 77, 46, 0.25)',
+    ability: {
+      name: 'Reino Infernal',
+      description:
+        'Cuando juegas este Pokémon para evolucionar a 1 de tus Pokémon, puedes buscar en tu baraja hasta 3 cartas de Energía Fuego Básica.',
+    },
+    attack: {
+      name: 'Oscuridad Ardiente',
+      damage: '180+',
+      energyCost: ['fire', 'fire'],
+      description:
+        'Hace 30 puntos de daño más por cada carta de Premio que haya tomado tu rival.',
+    },
+    weakness: { type: 'water', value: '×2' },
+    retreatCost: 2,
+    collectionCode: '006/151',
+    collectorSet: 'CBR ES',
   },
   {
     id: 'greninja',
     number: '#658',
     name: 'Greninja',
     artworkUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/658.png',
+    backgroundImage: '/backgrounds/greninja.jpg',
     types: ['AGUA', 'SINIESTRO'],
-    rarity: 'SPECIAL ILLUSTRATION RARE',
+    primaryType: 'water',
+    stage: 'FASE 2',
+    isEx: true,
+    hp: 310,
+    rarity: 'special-illustration-rare',
+    rarityLabel: 'SPECIAL ILLUSTRATION RARE',
+    rarityStars: '★★',
     theme: {
       primary: '#0ea5e9',
       secondary: '#6366f1',
       glow: 'rgba(14, 165, 233, 0.42)',
       soft: 'rgba(14, 165, 233, 0.14)',
     },
-    typeGradient: 'linear-gradient(145deg, #00080f 0%, #001a2d 50%, #060010 100%)',
+    typeGradient: 'linear-gradient(145deg, #021a30 0%, #032b4d 40%, #010d18 100%)',
+    ambientGlow: 'rgba(14, 165, 233, 0.25)',
+    ability: {
+      name: 'Sombra Shuriken',
+      description:
+        'Debes descartar 1 carta de Energía de tu mano para usar esta habilidad. Pon 2 contadores de daño en 1 Pokémon de tu rival.',
+    },
+    attack: {
+      name: 'Shuriken de Agua',
+      damage: '170',
+      energyCost: ['water', 'water', 'colorless'],
+      description:
+        'Este ataque hace 120 puntos de daño a 1 de los Pokémon en Banca de tu rival.',
+    },
+    weakness: { type: 'lightning', value: '×2' },
+    retreatCost: 1,
+    collectionCode: '658/151',
+    collectorSet: 'CBR ES',
   },
   {
     id: 'mewtwo',
     number: '#150',
     name: 'Mewtwo',
     artworkUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png',
+    backgroundImage: '/backgrounds/mewtwo.jpg',
     types: ['PSÍQUICO'],
-    rarity: 'HYPER RARE',
+    primaryType: 'psychic',
+    stage: 'BÁSICO',
+    isEx: true,
+    hp: 280,
+    rarity: 'hyper-rare',
+    rarityLabel: 'HYPER RARE',
+    rarityStars: '★★★',
     theme: {
       primary: '#a855f7',
       secondary: '#ec4899',
       glow: 'rgba(168, 85, 247, 0.44)',
       soft: 'rgba(168, 85, 247, 0.14)',
     },
-    typeGradient: 'linear-gradient(145deg, #0d0010 0%, #1a0030 50%, #0d0018 100%)',
+    typeGradient: 'linear-gradient(145deg, #240038 0%, #3e0959 40%, #12001c 100%)',
+    ambientGlow: 'rgba(168, 85, 247, 0.25)',
+    ability: {
+      name: 'Presión Psíquica',
+      description:
+        'Mientras este Pokémon esté en el Puesto Activo, el coste de Retirada del Pokémon Activo de tu rival es de 1 Energía Incolora más.',
+    },
+    attack: {
+      name: 'Onda Mental',
+      damage: '210',
+      energyCost: ['psychic', 'psychic', 'colorless'],
+      description: 'Descarta 2 Energías unidas a este Pokémon.',
+    },
+    weakness: { type: 'darkness', value: '×2' },
+    resistance: { type: 'fighting', value: '-30' },
+    retreatCost: 2,
+    collectionCode: '150/151',
+    collectorSet: 'CBR ES',
   },
   {
     id: 'bulbasaur',
     number: '#001',
     name: 'Bulbasaur',
     artworkUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png',
+    backgroundImage: '/backgrounds/bulbasaur.jpg',
     types: ['PLANTA', 'VENENO'],
-    rarity: 'ILLUSTRATION RARE',
+    primaryType: 'grass',
+    stage: 'BÁSICO',
+    isEx: false,
+    hp: 70,
+    rarity: 'illustration-rare',
+    rarityLabel: 'ILLUSTRATION RARE',
+    rarityStars: '★',
     theme: {
       primary: '#22c55e',
       secondary: '#84cc16',
       glow: 'rgba(34, 197, 94, 0.42)',
       soft: 'rgba(34, 197, 94, 0.14)',
     },
-    typeGradient: 'linear-gradient(145deg, #000f06 0%, #001a0d 50%, #040f00 100%)',
+    typeGradient: 'linear-gradient(145deg, #022610 0%, #073d1b 40%, #011408 100%)',
+    ambientGlow: 'rgba(34, 197, 94, 0.25)',
+    ability: {
+      name: 'Espesura',
+      description:
+        'Si los PS restantes de este Pokémon son 30 o menos, los ataques de este Pokémon hacen 30 puntos de daño más.',
+    },
+    attack: {
+      name: 'Látigo Cepa',
+      damage: '60',
+      energyCost: ['grass', 'colorless'],
+      description: 'Un azote veloz con lianas espinosas.',
+    },
+    weakness: { type: 'fire', value: '×2' },
+    retreatCost: 1,
+    collectionCode: '001/151',
+    collectorSet: 'CBR ES',
   },
 ];
 

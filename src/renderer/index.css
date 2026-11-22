@@ -18,6 +18,32 @@ button, [data-theme-reactive] {
   transition: background-color 600ms ease, box-shadow 600ms ease, color 600ms ease, border-color 600ms ease;
 }
 
+/* =============================================
+   HOLOGRAPHIC & FOIL EFFECTS (POKEMON TCG)
+   ============================================= */
+@keyframes holo-idle-sweep {
+  0% {
+    background-position: 0% 0%;
+    opacity: 0.15;
+  }
+  50% {
+    background-position: 100% 100%;
+    opacity: 0.45;
+  }
+  100% {
+    background-position: 0% 0%;
+    opacity: 0.15;
+  }
+}
+
+.animate-holo-idle {
+  animation: holo-idle-sweep 6s ease-in-out infinite;
+}
+
+.animate-holo-idle-paused {
+  animation-play-state: paused !important;
+}
+
 /* Estilos de barras de desplazamiento personalizadas estilo Dark Gaming */
 ::-webkit-scrollbar {
   width: 6px;
