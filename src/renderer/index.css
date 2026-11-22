@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos de barras de desplazamiento personalizadas estilo Dark Gaming */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #243049;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+}
+
+/* Región de arrastre para la barra de título personalizada de Electron */
+.window-drag-region {
+  -webkit-app-region: drag;
+}
+
+.window-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Efectos de brillo sutiles */
+.glow-card-hover {
+  transition: all 0.25s ease;
+}
+
+.glow-card-hover:hover {
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 25px -5px rgba(239, 68, 68, 0.15);
+}
+
+.glow-cyan-hover:hover {
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.15);
+}
