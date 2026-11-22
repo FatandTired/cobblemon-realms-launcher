@@ -216,8 +216,7 @@ export const PokemonHoloCard: React.FC<PokemonHoloCardProps> = ({
               className="absolute inset-0 z-21 pointer-events-none animate-holo-continuous"
               style={{
                 opacity: isHovered ? 0.4 : 0.24,
-                backgroundImage:
-                  'linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(34,197,94,0.3) 30%, rgba(132,204,22,0.3) 60%, rgba(255,255,255,0.3) 100%)',
+                backgroundImage: `linear-gradient(90deg, rgba(255,255,255,0.3) 0%, ${card.theme.glow} 35%, ${card.theme.soft} 65%, rgba(255,255,255,0.3) 100%)`,
                 backgroundSize: '220% 220%',
                 mixBlendMode: 'soft-light',
               }}

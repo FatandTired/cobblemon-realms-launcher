@@ -129,10 +129,22 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <div className="absolute bottom-1/3 left-1/3 w-80 h-80 rounded-full bg-lime-600/20 blur-3xl" />
               </div>
             )}
-            {activeCard.primaryType === 'dragon' && (
+            {activeCard.primaryType === 'dragon' && activeCard.id !== 'zygarde' && (
               <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-1/3 left-1/3 w-80 h-80 rounded-full bg-sky-600/20 blur-3xl animate-pulse" />
                 <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-red-600/20 blur-3xl" />
+              </div>
+            )}
+            {activeCard.id === 'zygarde' && (
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-1/3 left-1/4 w-80 h-80 rounded-full bg-emerald-500/20 blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/4 right-1/3 w-80 h-80 rounded-full bg-teal-600/20 blur-3xl" />
+              </div>
+            )}
+            {activeCard.primaryType === 'colorless' && (
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-1/3 left-1/4 w-80 h-80 rounded-full bg-amber-400/20 blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/4 right-1/3 w-80 h-80 rounded-full bg-slate-200/15 blur-3xl" />
               </div>
             )}
 
