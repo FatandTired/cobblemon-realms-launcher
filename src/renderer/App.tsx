@@ -313,40 +313,37 @@ export const App: React.FC = () => {
 
         {/* View Router */}
         <main className="flex-1 overflow-hidden bg-canvas relative">
-          {!isInitialLoading && (
-            <React.Fragment key={activeTab}>
-              {activeTab === 'home' && (
-                <HomePage
-                  activeAccount={activeAccount}
-                  serverStatus={serverStatus}
-                  manifest={manifest}
-                  settings={settings}
-                  progress={progress}
-                  onLaunch={handleLaunch}
-                  onAbort={handleAbort}
-                  onSelectAccount={() => setIsAccountModalOpen(true)}
-                  isGameRunning={progress?.step === 'running'}
-                  activeCard={activeCard}
-                  onChangeCard={handleChangeCard}
-                />
-              )}
+          {activeTab === 'home' && (
+            <HomePage
+              activeAccount={activeAccount}
+              serverStatus={serverStatus}
+              manifest={manifest}
+              settings={settings}
+              progress={progress}
+              onLaunch={handleLaunch}
+              onAbort={handleAbort}
+              onSelectAccount={() => setIsAccountModalOpen(true)}
+              isGameRunning={progress?.step === 'running'}
+              activeCard={activeCard}
+              onChangeCard={handleChangeCard}
+              isAppReady={!isInitialLoading}
+            />
+          )}
 
-              {activeTab === 'settings' && (
-                <SettingsPage
-                  settings={settings}
-                  onSaveSettings={handleSaveSettings}
-                  onOpenInstanceFolder={handleOpenInstanceFolder}
-                  onBrowseJavaPath={handleBrowseJavaPath}
-                />
-              )}
+          {activeTab === 'settings' && (
+            <SettingsPage
+              settings={settings}
+              onSaveSettings={handleSaveSettings}
+              onOpenInstanceFolder={handleOpenInstanceFolder}
+              onBrowseJavaPath={handleBrowseJavaPath}
+            />
+          )}
 
-              {activeTab === 'console' && (
-                <ConsolePage
-                  logs={logs}
-                  onClearLogs={() => setLogs([])}
-                />
-              )}
-            </React.Fragment>
+          {activeTab === 'console' && (
+            <ConsolePage
+              logs={logs}
+              onClearLogs={() => setLogs([])}
+            />
           )}
         </main>
       </div>
@@ -378,7 +375,7 @@ export const App: React.FC = () => {
           <motion.div
             key="global-app-loader"
             initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, pointerEvents: 'none' }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#07090e] select-none"
           >

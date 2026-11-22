@@ -32,6 +32,7 @@ interface HomePageProps {
   isGameRunning?: boolean;
   activeCard: PokemonCard;
   onChangeCard: () => void;
+  isAppReady?: boolean;
 }
 
 /** Limpia códigos de formato de Minecraft §X */
@@ -51,6 +52,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   isGameRunning = false,
   activeCard,
   onChangeCard,
+  isAppReady = true,
 }) => {
   const isLaunching = progress && progress.step !== 'idle' && progress.step !== 'error';
   const mcVer = manifest?.minecraftVersion || APP_CONFIG.MINECRAFT.VERSION;
@@ -150,7 +152,12 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* ============================================================== */}
       {/* 1. TOP VERSION PILL (COMPACTO)                                 */}
       {/* ============================================================== */}
-      <div className="relative z-10 flex items-center justify-center gap-2 pt-3 pb-1 flex-shrink-0">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={isAppReady ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 flex items-center justify-center gap-2 pt-3 pb-1 flex-shrink-0"
+      >
         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-widest uppercase bg-[#0b0d14]/60 backdrop-blur text-slate-400 border border-white/10">
           MC {mcVer}
         </span>
@@ -175,7 +182,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </span>
           </>
         )}
-      </div>
+      </motion.div>
 
       {/* ============================================================== */}
       {/* 1. ÁREA CENTRAL: PANELES FLANQUEANDO LA CARTA PROTAGONISTA     */}
@@ -184,8 +191,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* PANEL IZQUIERDO: ESTADO DEL SERVIDOR */}
         <motion.div
           initial={{ opacity: 0, x: -24 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+          animate={isAppReady ? { opacity: 1, x: 0 } : { opacity: 0, x: -24 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
           className="w-60 flex-shrink-0"
         >
           <div className="bg-[#0b0d14]/45 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl space-y-3">
@@ -254,8 +261,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* CENTRO: CARTA POKÉMON PROTAGONISTA */}
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.94 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+          animate={isAppReady ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.94 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
           className="flex flex-col items-center gap-2.5 flex-shrink-0"
         >
           <PokemonHoloCard
@@ -289,8 +296,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* PANEL DERECHO: CONTENIDO DEL PACK & RAM */}
         <motion.div
           initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+          animate={isAppReady ? { opacity: 1, x: 0 } : { opacity: 0, x: 24 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
           className="w-60 flex-shrink-0"
         >
           <div className="bg-[#0b0d14]/45 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl space-y-3">
@@ -347,7 +354,12 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* ============================================================== */}
       {/* 1. BARRA INFERIOR TRANSLÚCIDA ESTILO CRISTAL (GLASSMORPHISM)   */}
       {/* ============================================================== */}
-      <div className="relative z-10 flex-shrink-0 w-full bg-[#090b12]/40 backdrop-blur-xl border-t border-white/10 px-8 py-3.5">
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={isAppReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
+        className="relative z-10 flex-shrink-0 w-full bg-[#090b12]/40 backdrop-blur-xl border-t border-white/10 px-8 py-3.5"
+      >
         {isLaunching ? (
           <div className="space-y-2 max-w-4xl mx-auto">
             <div className="flex items-center justify-between text-xs">
@@ -485,7 +497,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </motion.button>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };
