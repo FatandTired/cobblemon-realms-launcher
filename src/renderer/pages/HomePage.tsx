@@ -75,10 +75,10 @@ export const HomePage: React.FC<HomePageProps> = ({
             initial={{ opacity: 0, scale: 1.02 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.65, ease: 'easeInOut' }}
+            transition={{ duration: 0.52, ease: 'easeInOut' }}
             className="absolute inset-0"
           >
-            {/* WALLPAPER DEL POKÉMON EN ALTA RESOLUCIÓN */}
+            {/* WALLPAPER DEL POKÉMON EN ALTA RESOLUCIÓN (MENOR OSCURECIMIENTO) */}
             <div className="absolute inset-0 overflow-hidden">
               <img
                 src={activeCard.backgroundImage}
@@ -86,7 +86,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 draggable={false}
                 className="w-full h-full object-cover object-center"
                 style={{
-                  filter: 'brightness(0.65) contrast(1.15)',
+                  filter: 'brightness(0.82) contrast(1.1)',
                 }}
               />
             </div>
@@ -95,7 +95,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
-                background: `radial-gradient(ellipse at 50% 45%, ${activeCard.ambientGlow} 0%, rgba(7, 9, 14, 0.45) 60%, #07090e 95%)`,
+                background: `radial-gradient(ellipse at 50% 45%, ${activeCard.ambientGlow} 0%, rgba(7, 9, 14, 0.28) 60%, rgba(7, 9, 14, 0.82) 95%)`,
                 mixBlendMode: 'multiply',
               }}
             />
@@ -126,12 +126,12 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
             )}
 
-            {/* Viñeta radial oscura para garantizar legibilidad */}
+            {/* Viñeta radial más suave para mayor claridad del artwork */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
                 background:
-                  'radial-gradient(ellipse at center, transparent 20%, rgba(7, 9, 14, 0.55) 60%, #07090e 95%)',
+                  'radial-gradient(ellipse at center, transparent 25%, rgba(7, 9, 14, 0.38) 65%, rgba(7, 9, 14, 0.82) 95%)',
               }}
             />
 
@@ -140,7 +140,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="absolute bottom-0 inset-x-0 h-40 pointer-events-none"
               style={{
                 background:
-                  'linear-gradient(to top, rgba(7, 9, 14, 0.95) 0%, rgba(7, 9, 14, 0.4) 60%, transparent 100%)',
+                  'linear-gradient(to top, rgba(7, 9, 14, 0.8) 0%, rgba(7, 9, 14, 0.3) 60%, transparent 100%)',
               }}
             />
           </motion.div>
