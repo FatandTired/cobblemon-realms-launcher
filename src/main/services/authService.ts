@@ -1,13 +1,80 @@
 import { BrowserWindow, safeStorage, session } from 'electron';
 import https from 'https';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import { Account } from '../../shared/types';
 import { APP_CONFIG } from '../../shared/config';
 
-// Client ID público oficial del launcher de Minecraft para OAuth2 en login.live.com
-export const MS_CLIENT_ID = '00000000402b5328';
-export const MS_REDIRECT_URI = 'https://login.live.com/oauth20_desktop.srf';
-export const MS_SCOPE = 'service::user.auth.xboxlive.com::MBI_SSL';
+// Endpoints y constantes oficiales de Microsoft Entra ID (OAuth 2.0 v2 + PKCE)
+export const ENTRA_AUTH_URL = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize';
+export const ENTRA_TOKEN_HOST = 'login.microsoftonline.com';
+export const ENTRA_TOKEN_PATH = '/consumers/oauth2/v2.0/token';
+export const ENTRA_REDIRECT_URI = 'https://login.microsoftonline.com/common/oauth2/nativeclient';
+export const ENTRA_SCOPE = 'XboxLive.signin offline_access';
+
+export const PLACEHOLDER_CLIENT_ID = 'PEGA_AQUI_TU_AZURE_CLIENT_ID';
+
+/**
+ * Obtiene el AZURE_CLIENT_ID inyectado por Vite / process.env o directamente de .env si está disponible en desarrollo.
+ */
+export function getAzureClientId(): string {
+  let clientId = (typeof process !== 'undefined' && process.env?.AZURE_CLIENT_ID) ? process.env.AZURE_CLIENT_ID : '';
+
+  // Fallback para desarrollo si no se inyectó o aún tiene el placeholder
+  if (!clientId || clientId.trim() === '' || clientId === PLACEHOLDER_CLIENT_ID) {
+    try {
+      const envPath = path.join(process.cwd(), '.env');
+      if (fs.existsSync(envPath)) {
+        const content = fs.readFileSync(envPath, 'utf-8');
+        const match = content.match(/^AZURE_CLIENT_ID=(.*)$/m);
+        if (match && match[1]) {
+          clientId = match[1].trim().replace(/^['"]|['"]$/g, '');
+        }
+      }
+    } catch {}
+  }
+
+  return clientId ? clientId.trim() : '';
+}
+
+/**
+ * Valida que el AZURE_CLIENT_ID esté configurado correctamente antes de intentar la autenticación.
+ */
+export function validateAzureClientId(): string {
+  const clientId = getAzureClientId();
+  if (!clientId || clientId === PLACEHOLDER_CLIENT_ID) {
+    throw new Error(
+      'AZURE_CLIENT_ID no configurado. Debes configurar tu Client ID oficial de Microsoft Entra ID en el archivo .env antes de iniciar sesión.'
+    );
+  }
+  return clientId;
+}
+
+/**
+ * Codifica un buffer en Base64URL sin padding (RFC 7636).
+ */
+function base64UrlEncode(buffer: Buffer): string {
+  return buffer.toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+/**
+ * Genera el par PKCE (code_verifier y code_challenge con SHA-256) nativamente con crypto de Node.
+ */
+export function generatePkcePair(): { codeVerifier: string; codeChallenge: string } {
+  // 32 bytes de entropía criptográfica producen un code_verifier de 43 caracteres Base64URL (RFC 7636)
+  const verifierBuffer = crypto.randomBytes(32);
+  const codeVerifier = base64UrlEncode(verifierBuffer);
+
+  // SHA-256 en Base64URL para code_challenge (método S256)
+  const hash = crypto.createHash('sha256').update(codeVerifier).digest();
+  const codeChallenge = base64UrlEncode(hash);
+
+  return { codeVerifier, codeChallenge };
+}
 
 /**
  * Cifra un texto sensible con safeStorage de Electron si está disponible.
@@ -175,10 +242,12 @@ function httpsGetJson<T = any>(hostname: string, path: string, headers: Record<s
 }
 
 /**
- * Abre ventana modal limpia de Electron en partición 'ms-auth' para capturar el código OAuth2 de login.live.com.
+ * Abre ventana modal de Electron en partición 'ms-auth' para el flujo oficial de Microsoft Entra ID (OAuth 2.0 v2 + PKCE).
  */
-function acquireAuthorizationCode(parentWindow?: BrowserWindow | null): Promise<string> {
+function acquireAuthorizationCode(codeChallenge: string, parentWindow?: BrowserWindow | null): Promise<string> {
   return new Promise((resolve, reject) => {
+    const clientId = validateAzureClientId();
+
     const authWindow = new BrowserWindow({
       width: 500,
       height: 680,
@@ -195,15 +264,23 @@ function acquireAuthorizationCode(parentWindow?: BrowserWindow | null): Promise<
       }
     });
 
-    const authUrl = `https://login.live.com/oauth20_authorize.srf?client_id=${MS_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(
-      MS_REDIRECT_URI
-    )}&scope=${encodeURIComponent(MS_SCOPE)}&prompt=select_account`;
+    const authParams = new URLSearchParams({
+      client_id: clientId,
+      response_type: 'code',
+      redirect_uri: ENTRA_REDIRECT_URI,
+      scope: ENTRA_SCOPE,
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
+      prompt: 'select_account'
+    });
+
+    const authUrl = `${ENTRA_AUTH_URL}?${authParams.toString()}`;
 
     let finished = false;
 
     const checkRedirect = (url: string) => {
       if (finished) return;
-      if (url.startsWith(MS_REDIRECT_URI)) {
+      if (url.startsWith(ENTRA_REDIRECT_URI)) {
         finished = true;
         try {
           const parsed = new URL(url);
@@ -211,7 +288,9 @@ function acquireAuthorizationCode(parentWindow?: BrowserWindow | null): Promise<
           const error = parsed.searchParams.get('error');
           const errorDesc = parsed.searchParams.get('error_description');
 
-          authWindow.destroy();
+          if (!authWindow.isDestroyed()) {
+            authWindow.destroy();
+          }
 
           if (code) {
             resolve(code);
@@ -219,14 +298,28 @@ function acquireAuthorizationCode(parentWindow?: BrowserWindow | null): Promise<
             reject(new Error(errorDesc || error || 'Autorización cancelada o denegada por Microsoft.'));
           }
         } catch (err: any) {
-          authWindow.destroy();
+          if (!authWindow.isDestroyed()) {
+            authWindow.destroy();
+          }
           reject(new Error(`Error analizando redirección de autenticación: ${err.message}`));
         }
       }
     };
 
-    authWindow.webContents.on('will-redirect', (_e, url) => checkRedirect(url));
-    authWindow.webContents.on('will-navigate', (_e, url) => checkRedirect(url));
+    authWindow.webContents.on('will-redirect', (e, url) => {
+      if (url.startsWith(ENTRA_REDIRECT_URI)) {
+        e.preventDefault();
+      }
+      checkRedirect(url);
+    });
+
+    authWindow.webContents.on('will-navigate', (e, url) => {
+      if (url.startsWith(ENTRA_REDIRECT_URI)) {
+        e.preventDefault();
+      }
+      checkRedirect(url);
+    });
+
     authWindow.webContents.on('did-navigate', (_e, url) => checkRedirect(url));
 
     authWindow.once('ready-to-show', () => {
@@ -253,6 +346,8 @@ function acquireAuthorizationCode(parentWindow?: BrowserWindow | null): Promise<
 
 /**
  * Autentica o renueva el token contra Xbox Live, XSTS y Minecraft Services.
+ * REGLA CRÍTICA DE ENTRA ID:
+ * Con Microsoft Entra ID (OAuth 2.0 v2), Properties.RpsTicket DEBE llevar el prefijo "d=".
  */
 async function authenticateXboxAndMinecraft(
   msAccessToken: string,
@@ -260,13 +355,11 @@ async function authenticateXboxAndMinecraft(
 ): Promise<{ minecraftToken: string; expiresAt: number }> {
   log('Autenticando con Xbox Live (user.auth.xboxlive.com)...');
 
-  // REGLA CRÍTICA DE LOGIN.LIVE.COM:
-  // Con el scope MBI_SSL de login.live.com, RpsTicket se envía como el access_token DIRECTO SIN el prefijo "d=".
   const xbl = await httpsPostJson('user.auth.xboxlive.com', '/user/authenticate', {
     Properties: {
       AuthMethod: 'RPS',
       SiteName: 'user.auth.xboxlive.com',
-      RpsTicket: msAccessToken
+      RpsTicket: `d=${msAccessToken}`
     },
     RelyingParty: 'http://auth.xboxlive.com',
     TokenType: 'JWT'
@@ -327,7 +420,7 @@ async function authenticateXboxAndMinecraft(
 }
 
 /**
- * Inicia el flujo real de autenticación Microsoft usando el flujo heredado de login.live.com.
+ * Inicia el flujo real de autenticación Microsoft usando Microsoft Entra ID (OAuth 2.0 v2 + PKCE).
  */
 export async function loginMicrosoftAccount(
   parentWindow?: BrowserWindow | null,
@@ -337,19 +430,23 @@ export async function loginMicrosoftAccount(
     if (onLog) onLog(m);
   };
 
-  log('Abriendo ventana modal de inicio de sesión de Microsoft (login.live.com)...');
-  const code = await acquireAuthorizationCode(parentWindow);
+  const clientId = validateAzureClientId();
+  const { codeVerifier, codeChallenge } = generatePkcePair();
 
-  log('Intercambiando código por tokens en login.live.com/oauth20_token.srf...');
+  log('Abriendo ventana modal de inicio de sesión de Microsoft (Entra ID v2)...');
+  const code = await acquireAuthorizationCode(codeChallenge, parentWindow);
+
+  log('Intercambiando código por tokens en Microsoft Entra ID (oauth2/v2.0/token)...');
   const tokenData = await httpsPostJson(
-    'login.live.com',
-    '/oauth20_token.srf',
+    ENTRA_TOKEN_HOST,
+    ENTRA_TOKEN_PATH,
     {
-      client_id: MS_CLIENT_ID,
+      client_id: clientId,
+      scope: ENTRA_SCOPE,
       code,
+      redirect_uri: ENTRA_REDIRECT_URI,
       grant_type: 'authorization_code',
-      redirect_uri: MS_REDIRECT_URI,
-      scope: MS_SCOPE
+      code_verifier: codeVerifier
     },
     true
   );
@@ -358,10 +455,10 @@ export async function loginMicrosoftAccount(
   const msRefreshToken = tokenData.refresh_token;
 
   if (!msAccessToken) {
-    throw new Error('No se recibió access_token de Microsoft.');
+    throw new Error('No se recibió access_token de Microsoft Entra ID.');
   }
 
-  // Cadena Xbox Live -> XSTS -> Minecraft Services
+  // Cadena Xbox Live (con RpsTicket "d=" + token) -> XSTS -> Minecraft Services
   const { minecraftToken, expiresAt } = await authenticateXboxAndMinecraft(msAccessToken, log);
 
   // Consulta de perfil oficial y validación de licencia
@@ -395,7 +492,8 @@ export async function loginMicrosoftAccount(
     refreshToken: msRefreshToken ? encryptSensitiveToken(msRefreshToken) : undefined,
     avatarUrl: `https://mc-heads.net/avatar/${profile.name}/100`,
     expiresAt,
-    addedAt: Date.now()
+    addedAt: Date.now(),
+    authProvider: 'azure'
   };
 
   log(`¡Cuenta Microsoft autenticada exitosamente! Usuario: ${profile.name} [UUID: ${formattedUuid}]`);
@@ -403,7 +501,8 @@ export async function loginMicrosoftAccount(
 }
 
 /**
- * Renueva el token de una cuenta Microsoft usando login.live.com si está expirado o próximo a expirar.
+ * Renueva el token de una cuenta Microsoft usando Microsoft Entra ID si está expirado o próximo a expirar.
+ * Si la cuenta proviene del flujo heredado (authProvider !== 'azure'), se invalida limpiamente.
  */
 export async function refreshMicrosoftAccountIfNeeded(
   account: Account,
@@ -413,29 +512,38 @@ export async function refreshMicrosoftAccountIfNeeded(
     return account;
   }
 
+  const log = (m: string) => {
+    if (onLog) onLog(m);
+  };
+
+  // Migración limpia: Si la cuenta proviene del flujo heredado de login.live.com, invalidar
+  if (account.authProvider !== 'azure') {
+    log(`Aviso: La sesión de ${account.username} proviene del flujo anterior de Microsoft. Se requiere actualizar al flujo oficial.`);
+    throw new Error(
+      `La sesión de ${account.username} requiere actualizarse al nuevo sistema oficial de Microsoft Entra ID. Por favor, vuelve a iniciar sesión con tu cuenta de Microsoft.`
+    );
+  }
+
   // Renovar si faltan menos de 10 minutos para expirar
   const needsRefresh = !account.expiresAt || account.expiresAt - Date.now() < 10 * 60 * 1000;
   if (!needsRefresh) {
     return account;
   }
 
-  const log = (m: string) => {
-    if (onLog) onLog(m);
-  };
+  const clientId = validateAzureClientId();
 
   log(`Renovando sesión Microsoft para el usuario ${account.username}...`);
   const rawRefreshToken = decryptSensitiveToken(account.refreshToken);
 
   try {
     const tokenData = await httpsPostJson(
-      'login.live.com',
-      '/oauth20_token.srf',
+      ENTRA_TOKEN_HOST,
+      ENTRA_TOKEN_PATH,
       {
-        client_id: MS_CLIENT_ID,
+        client_id: clientId,
+        scope: ENTRA_SCOPE,
         refresh_token: rawRefreshToken,
-        grant_type: 'refresh_token',
-        redirect_uri: MS_REDIRECT_URI,
-        scope: MS_SCOPE
+        grant_type: 'refresh_token'
       },
       true
     );
@@ -449,7 +557,8 @@ export async function refreshMicrosoftAccountIfNeeded(
       ...account,
       accessToken: encryptSensitiveToken(minecraftToken),
       refreshToken: encryptSensitiveToken(newMsRefresh),
-      expiresAt
+      expiresAt,
+      authProvider: 'azure'
     };
 
     log(`Sesión de ${account.username} renovada exitosamente.`);

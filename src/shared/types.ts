@@ -10,6 +10,7 @@ export interface Account {
   refreshToken?: string;
   expiresAt?: number;
   addedAt: number;
+  authProvider?: 'legacy' | 'azure';
 }
 
 export interface LauncherSettings {
